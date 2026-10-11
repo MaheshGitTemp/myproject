@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import SettingRow from '../../../components/ui/SettingRow.jsx';
 import { PILLS } from '../../../components/layout/AccountSidebar.jsx';
 import { useToast } from '../../../context/ToastContext.jsx';
@@ -24,6 +24,8 @@ export default function Gallery() {
     robots: 'noindex, nofollow',
   });
   const { showToast } = useToast();
+  const fileInputRef = useRef(null);
+  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   const [privacy, setPrivacy] = useState({ hideGallery: false, blurPhotos: true });
   const photos = []; // TODO: load from the API; upload is not wired in the original either
 
@@ -44,11 +46,44 @@ export default function Gallery() {
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
           <i aria-hidden="true" className="fas fa-cloud-upload-alt text-brand" /> Upload Photos
         </h3>
-        <div className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer group">
+        <div
+          className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer group"
+          onClick={() => fileInputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
+          aria-label="Upload photos"
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png"
+            multiple
+            className="sr-only"
+            onChange={(e) => {
+              // TODO: wire to upload handler
+              console.log('Selected files:', e.target.files);
+            }}
+          />
           <i aria-hidden="true" className="fas fa-images text-4xl text-slate-400 mb-3 group-hover:text-brand transition-colors" />
-          <p className="text-slate-700 dark:text-slate-300 font-medium">Drag &amp; Drop photos here</p>
-          <p className="text-sm text-slate-500 mb-4">or click to browse from your device</p>
-          <button type="button" className="px-6 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition shadow-md">Select Photos</button>
+          {isTouchDevice ? (
+            <>
+              <p className="text-slate-700 dark:text-slate-300 font-medium">Tap to select photos</p>
+              <p className="text-sm text-slate-500 mb-4">from your camera or photo library</p>
+            </>
+          ) : (
+            <>
+              <p className="text-slate-700 dark:text-slate-300 font-medium">Drag &amp; Drop photos here</p>
+              <p className="text-sm text-slate-500 mb-4">or click to browse from your device</p>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+            className="px-6 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg font-semibold transition shadow-md"
+          >
+            Select Photos
+          </button>
           <p className="text-xs text-slate-400 mt-3">Supports JPG, PNG. Max 5MB per file.</p>
         </div>
       </div>

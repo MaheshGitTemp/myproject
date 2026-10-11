@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import StepNav from './StepNav.jsx';
 
 const EXTRA_SLOTS = [1, 2, 3, 4, 5];
@@ -8,6 +9,9 @@ const TIPS = [
 ];
 
 export default function Step5Photos({ onBack }) {
+  const fileInputRef = useRef(null);
+  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
   return (
     <>
       <div>
@@ -15,17 +19,32 @@ export default function Step5Photos({ onBack }) {
         <p className="text-slate-500 dark:text-slate-400">Profiles with photos get 10x more matches! Upload up to 6 photos.</p>
       </div>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png"
+        multiple
+        className="sr-only"
+        onChange={(e) => {
+          // TODO: wire to upload handler
+          console.log('Selected files:', e.target.files);
+        }}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {/* Main Photo Slot */}
-        <div className="relative aspect-square rounded-2xl border-2 border-dashed border-brand bg-brand-soft/30 dark:bg-brand/10 flex flex-col items-center justify-center cursor-pointer hover:bg-brand-soft/50 transition group">
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="relative aspect-square rounded-2xl border-2 border-dashed border-brand bg-brand-soft/30 dark:bg-brand/10 flex flex-col items-center justify-center cursor-pointer hover:bg-brand-soft/50 transition group"
+        >
           <i aria-hidden="true" className="fas fa-user-circle text-3xl text-brand mb-2 group-hover:scale-110 transition" />
           <span className="text-xs font-bold text-brand">Main Photo *</span>
-          <span className="text-[10px] text-slate-500 mt-1">Tap to upload</span>
+          <span className="text-[10px] text-slate-500 mt-1">{isTouchDevice ? 'Tap to upload' : 'Click to upload'}</span>
         </div>
 
         {/* Additional Photo Slots */}
         {EXTRA_SLOTS.map((n) => (
-          <div key={n} className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center cursor-pointer hover:border-brand hover:bg-brand-soft/20 transition group">
+          <div key={n} onClick={() => fileInputRef.current?.click()} className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center cursor-pointer hover:border-brand hover:bg-brand-soft/20 transition group">
             <i aria-hidden="true" className="fas fa-plus text-2xl text-slate-400 mb-1 group-hover:text-brand transition" />
             <span className="text-xs font-semibold text-slate-500">Add Photo</span>
           </div>
