@@ -2,35 +2,60 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import MainLayout from '../../../layouts/MainLayout.jsx';
-import SwipeDeck from './components/SwipeDeck.jsx';
-import { HOME_DRAWER_ITEMS, PROFILES, RESET_PROFILES } from './homeData.js';
+import { useAuth } from '../../../context/AuthContext.jsx';
+import { useToast } from '../../../context/ToastContext.jsx';
+import { profileUrl } from '../../../services/profileLookupService.js';
+import { HOME_DRAWER_ITEMS } from './homeData.js';
+import { MATCHES_OF_DAY, RECOMMENDED } from './homeFeedData.js';
+import GreetingHeader from './components/GreetingHeader.jsx';
+import MatchStrip from './components/MatchStrip.jsx';
+import HomeProfileCard from './components/HomeProfileCard.jsx';
 
 export default function Home() {
   usePageMeta({
     title: 'Home | Telugu Sambandham',
-    description: 'Swipe through curated profiles on Telugu Sambandham. Like, skip, or learn more.',
+    description: 'Your daily matches and recommended profiles on Telugu Sambandham.',
     robots: 'noindex, nofollow',
   });
+  const { user } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
-  const [profiles, setProfiles] = useState(PROFILES);
+  const [interested, setInterested] = useState({});
+
+  const onView = (p) => navigate(profileUrl(p.id));
+  const onInterest = (p) => {
+    setInterested((m) => ({ ...m, [p.id]: true }));
+    showToast('Interest Sent', `Your interest has been sent to ${p.name}!`);
+  };
 
   return (
     <MainLayout
       variant="app"
       active="home"
       drawer={{ items: HOME_DRAWER_ITEMS, member: true, logout: true, logoutDivider: false }}
-      mainClassName="max-w-2xl mx-auto px-4 py-6 md:py-10 h-[calc(100dvh-9rem)] sm:h-[calc(100dvh-5rem)] flex flex-col"
+      mainClassName="max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-10 animate-fade-in"
     >
-      <div className="text-center mb-6 animate-fade-in">
-        <h1 className="text-3xl font-heading font-bold mb-2">Find Your <span className="gradient-text">Perfect Match</span></h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">Swipe through curated profiles. Like, skip, or learn more.</p>
-      </div>
-      <SwipeDeck
-        profiles={profiles}
-        onDone={() => setProfiles((l) => l.slice(1))}
-        onReset={() => setProfiles(RESET_PROFILES)}
-        onInfo={(p) => navigate(`/profile-details?id=${p.matId}`)}
-      />
+      <GreetingHeader name={user?.firstName} />
+
+      <MatchStrip profiles={MATCHES_OF_DAY} onOpen={onView} />
+
+      <section>
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <i aria-hidden="true" className="fas fa-heart text-brand" /> Recommended for You
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {RECOMMENDED.map((p, i) => (
+            <HomeProfileCard
+              key={p.id}
+              profile={p}
+              index={i}
+              interested={!!interested[p.id]}
+              onInterest={onInterest}
+              onView={onView}
+            />
+          ))}
+        </div>
+      </section>
     </MainLayout>
   );
 }
