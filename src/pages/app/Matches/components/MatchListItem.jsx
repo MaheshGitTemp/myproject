@@ -30,12 +30,12 @@ export default function MatchListItem({ profile: p, index, mutual, onOpen, onRem
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5"><i aria-hidden="true" className="fas fa-map-marker-alt text-brand" /><span>{`${p.location}, ${p.state}`}</span></p>
             </div>
-            <div className="inline-flex items-center gap-1 px-3 py-1 bg-brand/10 rounded-full text-xs font-semibold text-brand"><i aria-hidden="true" className="fas fa-users" /><span>{p.caste}</span></div>
+            <div className="inline-flex items-center gap-1 px-3 py-1 bg-brand/10 dark:bg-brand/20 rounded-full text-xs font-semibold text-brand"><i aria-hidden="true" className="fas fa-users" /><span>{p.caste}</span></div>
           </div>
           <div className="flex flex-wrap gap-2 mb-3">
-            <span className="px-2 py-1 bg-green-50 text-green-700 border border-green-200 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-leaf mr-1" />Pure Veg</span>
-            <span className="px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-briefcase mr-1" /><span>{p.job}</span></span>
-            <span className="px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-star mr-1" /><span>{p.rasi}</span></span>
+            <span className="px-2 py-1 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-leaf mr-1" />Pure Veg</span>
+            <span className="px-2 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-briefcase mr-1" /><span>{p.job}</span></span>
+            <span className="px-2 py-1 bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-star mr-1" /><span>{p.rasi}</span></span>
           </div>
           <div className="flex flex-wrap gap-3 text-sm text-slate-600 dark:text-slate-300 mb-3">
             <span className="flex items-center gap-1.5"><i aria-hidden="true" className="fas fa-ruler-vertical text-brand/70" /><span>{p.height}</span></span>

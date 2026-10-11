@@ -29,7 +29,7 @@ function Body({ profile: p, onClose, onRemove, onShortlist, onMessage }) {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center"><i aria-hidden="true" className="fas fa-user text-brand text-xl" /></div>
+          <div className="w-12 h-12 rounded-full bg-brand/10 dark:bg-brand/20 flex items-center justify-center"><i aria-hidden="true" className="fas fa-user text-brand text-xl" /></div>
           <div>
             <h2 className="text-xl font-heading font-bold text-slate-800 dark:text-white"><span>{p.name}</span>, <span>{p.age}</span> {p.verified && <i aria-hidden="true" className="fas fa-check-circle text-green-500 text-sm ml-2" />}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">MAT<span>{p.uid}</span> • <span>{p.caste}</span></p>
