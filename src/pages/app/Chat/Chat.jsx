@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import MainLayout from '../../../layouts/MainLayout.jsx';
 import { CHAT_DRAWER_ITEMS, CONVERSATIONS } from './chatData.js';
@@ -15,6 +15,31 @@ export default function Chat() {
   const [selectedId, setSelectedId] = useState(null);
   const [query, setQuery] = useState('');
   const [draft, setDraft] = useState('');
+
+  // Sync chat area height with visual viewport (iOS keyboard shrinks it).
+  // Lives here so --chat-vh is set whenever the Chat page is mounted (list view or open conversation).
+  useEffect(() => {
+    function setVh() {
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.setProperty('--chat-vh', `${h}px`);
+    }
+    setVh();
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', setVh);
+      vv.addEventListener('scroll', setVh);
+    } else {
+      window.addEventListener('resize', setVh);
+    }
+    return () => {
+      if (vv) {
+        vv.removeEventListener('resize', setVh);
+        vv.removeEventListener('scroll', setVh);
+      } else {
+        window.removeEventListener('resize', setVh);
+      }
+    };
+  }, []);
 
   const q = query.trim().toLowerCase();
   const visible = q ? conversations.filter((c) => c.name.toLowerCase().includes(q)) : conversations;
@@ -45,14 +70,14 @@ export default function Chat() {
       variant="app"
       active="chat"
       drawer={{ items: CHAT_DRAWER_ITEMS }}
-      mainClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8"
-      mainStyle={{ height: 'calc(100dvh - 5rem)' }}
+      mainClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 md:py-8 flex flex-col overflow-hidden"
+      mainStyle={{ height: 'calc(var(--chat-vh, 100dvh) - 4rem)' }}
     >
-      <div className="md:hidden mb-4 animate-fade-in">
+      <div className="md:hidden mb-4 flex-shrink-0 animate-fade-in">
         <h1 className="text-2xl font-heading font-bold mb-1">Your <span className="gradient-text">Conversations</span></h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">Connect with your matches and start meaningful conversations.</p>
       </div>
-      <div className="glass rounded-3xl card-shadow overflow-hidden flex flex-col md:flex-row h-full animate-slide-up">
+      <div className="glass rounded-3xl card-shadow overflow-hidden flex flex-col md:flex-row flex-1 min-h-0 animate-slide-up">
         <ConversationList conversations={visible} selectedId={selectedId} query={query} onQuery={setQuery} onSelect={select} />
         <ChatWindow chat={active} draft={draft} onDraft={setDraft} onBack={() => setSelectedId(null)} onSend={send} />
       </div>

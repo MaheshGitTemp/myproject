@@ -38,40 +38,16 @@ export default function ChatWindow({ chat, draft, onDraft, onBack, onSend }) {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [chat?.id, count]);
 
-  // Sync chat panel height with visual viewport (iOS keyboard shrinks it)
-  useEffect(() => {
-    function setVh() {
-      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      document.documentElement.style.setProperty('--chat-vh', `${h}px`);
-    }
-    setVh();
-    const vv = window.visualViewport;
-    if (vv) {
-      vv.addEventListener('resize', setVh);
-      vv.addEventListener('scroll', setVh);
-    } else {
-      window.addEventListener('resize', setVh);
-    }
-    return () => {
-      if (vv) {
-        vv.removeEventListener('resize', setVh);
-        vv.removeEventListener('scroll', setVh);
-      } else {
-        window.removeEventListener('resize', setVh);
-      }
-    };
-  }, []);
-
   function send() {
     if (!draft.trim()) return;
     onSend(draft.trim());
   }
 
   return (
-    <div className={`flex-1 flex-col bg-white/30 dark:bg-slate-900/30 relative ${chat ? 'flex' : 'hidden md:flex'}`} style={{ height: 'var(--chat-vh, 100%)' }}>
+    <div className={`flex-1 flex-col bg-white/30 dark:bg-slate-900/30 relative ${chat ? 'flex' : 'hidden md:flex'}`} style={{ height: '100%' }}>
       {!chat ? <EmptyState /> : (
-        <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+        <div className="flex flex-col h-full min-h-0">
+          <div className="flex-shrink-0 p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <button type="button" onClick={onBack} className="md:hidden w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center" aria-label="Go back"><i aria-hidden="true" className="fas fa-arrow-left text-slate-600 dark:text-slate-300" /></button>
               <div className="relative">
@@ -87,12 +63,12 @@ export default function ChatWindow({ chat, draft, onDraft, onBack, onSend }) {
           </div>
 
           {/* pt-8 = p-4 + the 1rem the original gets from space-y-4 because Alpine <template> tags precede the first message */}
-          <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-4 pt-8 space-y-4 hide-scrollbar" id="messagesContainer">
+          <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 pt-8 space-y-4 hide-scrollbar" id="messagesContainer">
             {chat.messages.length === 0 && <div className="text-center py-8 text-slate-400"><p>No messages yet. Say hello! 👋</p></div>}
             {chat.messages.map((m) => <Bubble key={m.id} msg={m} />)}
           </div>
 
-          <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+          <div className="flex-shrink-0 p-4 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-4 border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
             <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex items-end gap-2">
               <button type="button" className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-500 transition flex-shrink-0" aria-label="Attach file"><i aria-hidden="true" className="fas fa-paperclip" /></button>
               <div className="flex-1 relative">
