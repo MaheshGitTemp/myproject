@@ -1,7 +1,13 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import FloatingShapes from '../components/layout/FloatingShapes.jsx';
-import AccountHeader from '../components/layout/AccountHeader.jsx';
 import AccountSidebar from '../components/layout/AccountSidebar.jsx';
+import LogoutModal from '../components/layout/LogoutModal.jsx';
+import MainHeader from '../components/layout/MainHeader.jsx';
 import MobileBottomNav from '../components/layout/MobileBottomNav.jsx';
+import MobileMenuDrawer from '../components/layout/MobileMenuDrawer.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { CURRENT_MEMBER } from '../services/profileService.js';
 import '../styles/account.css';
 
 // Shell for logged-in account pages (Dashboard, Edit Profile, Gallery, ...):
@@ -30,11 +36,24 @@ export default function AccountLayout({
   overlays,
   children,
 }) {
+  const member = CURRENT_MEMBER;
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+
+  const askLogout = () => setLogoutOpen(true);
+  function confirmLogout() {
+    setLogoutOpen(false);
+    signOut();
+    navigate('/login');
+  }
+
   return (
     <div className={`account-page${pageClass ? ` ${pageClass}` : ''} bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-safe-nav md:pb-10`}>
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <FloatingShapes />
-      <AccountHeader subtitle={subtitle} />
+      <MainHeader member={member} active={navActive} variant="me" onLogout={askLogout} onOpenMenu={() => setMenuOpen(true)} />
 
       <main id="main-content" tabIndex={-1} className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 animate-fade-in">
@@ -47,6 +66,9 @@ export default function AccountLayout({
           <div className={contentClassName}>{children}</div>
         </div>
       </main>
+
+      <MobileMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} active={navActive} chatBadge={member.unread.chat} onLogout={askLogout} />
+      <LogoutModal open={logoutOpen} onCancel={() => setLogoutOpen(false)} onConfirm={confirmLogout} />
 
       <MobileBottomNav active={navActive} badges={badges} lastItem={navLastItem} />
       {overlays}

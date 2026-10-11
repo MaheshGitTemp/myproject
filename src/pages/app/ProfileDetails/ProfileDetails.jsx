@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import DetailHeader from '../../../components/layout/DetailHeader.jsx';
 import FloatingShapes from '../../../components/layout/FloatingShapes.jsx';
+import LogoutModal from '../../../components/layout/LogoutModal.jsx';
+import MainHeader from '../../../components/layout/MainHeader.jsx';
 import MobileBottomNav from '../../../components/layout/MobileBottomNav.jsx';
+import MobileMenuDrawer from '../../../components/layout/MobileMenuDrawer.jsx';
+import { useAuth } from '../../../context/AuthContext.jsx';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import { getProfileById, normalizeId } from '../../../services/profileLookupService.js';
+import { CURRENT_MEMBER } from '../../../services/profileService.js';
 import '../../../styles/account.css';
 import '../../../styles/pages/profile-details.css';
 import { ActionRow, ProfileHeaderCard } from './components/ProfileHeaderCard.jsx';
@@ -15,6 +19,16 @@ import { Loading, LoadError, NotFound } from './components/StateCards.jsx';
 export default function ProfileDetails() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const member = CURRENT_MEMBER;
+  const { signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const askLogout = () => setLogoutOpen(true);
+  function confirmLogout() {
+    setLogoutOpen(false);
+    signOut();
+    navigate('/login');
+  }
   const raw = params.get('id');
   const requestedId = raw ? (normalizeId(raw) || String(raw).slice(0, 20)) : '';
   // state: loading | ready | notfound | noid | error
@@ -41,14 +55,11 @@ export default function ProfileDetails() {
     robots: 'noindex, nofollow',
   });
 
-  // like the original: go back when there is history, otherwise to Search
-  const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate('/search'));
-
   return (
     <div className="account-page page-profile-details bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-24 md:pb-10">
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <FloatingShapes />
-      <DetailHeader subtitle="Profile Details" onBack={goBack} />
+      <MainHeader member={member} active="search" variant="me" onLogout={askLogout} onOpenMenu={() => setMenuOpen(true)} />
 
       <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-slide-up">
         {state === 'loading' && <Loading />}
@@ -62,6 +73,9 @@ export default function ProfileDetails() {
           </div>
         )}
       </main>
+
+      <MobileMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} active="search" chatBadge={member.unread.chat} onLogout={askLogout} />
+      <LogoutModal open={logoutOpen} onCancel={() => setLogoutOpen(false)} onConfirm={confirmLogout} />
 
       <MobileBottomNav active="search" badges={{ chat: 5 }} />
     </div>
