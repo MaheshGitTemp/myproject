@@ -46,7 +46,7 @@ export default function Chat() {
       active="chat"
       drawer={{ items: CHAT_DRAWER_ITEMS }}
       mainClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8"
-      mainStyle={{ height: 'calc(100vh - 5rem)' }}
+      mainStyle={{ height: 'calc(100dvh - 5rem)' }}
     >
       <div className="md:hidden mb-4 animate-fade-in">
         <h1 className="text-2xl font-heading font-bold mb-1">Your <span className="gradient-text">Conversations</span></h1>

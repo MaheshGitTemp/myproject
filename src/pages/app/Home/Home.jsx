@@ -19,7 +19,7 @@ export default function Home() {
       variant="app"
       active="home"
       drawer={{ items: HOME_DRAWER_ITEMS, member: true, logout: true, logoutDivider: false }}
-      mainClassName="max-w-2xl mx-auto px-4 py-6 md:py-10 h-[calc(100vh-5rem)] flex flex-col"
+      mainClassName="max-w-2xl mx-auto px-4 py-6 md:py-10 h-[calc(100dvh-9rem)] sm:h-[calc(100dvh-5rem)] flex flex-col"
     >
       <div className="text-center mb-6 animate-fade-in">
         <h1 className="text-3xl font-heading font-bold mb-2">Find Your <span className="gradient-text">Perfect Match</span></h1>

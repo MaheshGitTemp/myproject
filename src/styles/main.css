@@ -64,6 +64,9 @@ h1, h2, h3, h4, h5, h6 {
 .pb-safe { 
     padding-bottom: env(safe-area-inset-bottom); 
 }
+.pb-safe-nav {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
 .hide-scrollbar::-webkit-scrollbar { 
     display: none; 
 }

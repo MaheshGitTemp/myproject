@@ -7,7 +7,7 @@ import MobileBottomNav from '../components/layout/MobileBottomNav.jsx';
 // Shell for the Register page: top-aligned narrow <main>, mobile bottom nav, bottom padding.
 export default function WizardLayout() {
   return (
-    <div className="bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-24 md:pb-10">
+    <div className="bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-safe-nav md:pb-10">
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <FloatingShapes />
       <Header

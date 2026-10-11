@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import useBodyClass from '../hooks/useBodyClass.js';
 import { CURRENT_MEMBER } from '../services/profileService.js';
 
-const BODY = 'bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-24 md:pb-10';
+const BODY = 'bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-safe-nav md:pb-10';
 
 // Shell for the main logged-in pages: full header, phone drawer, bottom nav.
 //   variant       : 'me'  (/me: logout confirmation modal)  |  'app' (Matches / Search / Chat: logout is a link)

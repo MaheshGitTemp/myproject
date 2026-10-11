@@ -31,7 +31,7 @@ export default function AccountLayout({
   children,
 }) {
   return (
-    <div className={`account-page${pageClass ? ` ${pageClass}` : ''} bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-24 md:pb-10`}>
+    <div className={`account-page${pageClass ? ` ${pageClass}` : ''} bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-safe-nav md:pb-10`}>
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <FloatingShapes />
       <AccountHeader subtitle={subtitle} />
