@@ -6,8 +6,10 @@ export const DEFAULT_FILTERS = {
 export const SORTS = [
   { id: 'recent', icon: 'fa-clock', label: 'Most Recent' },
   { id: 'match', icon: 'fa-percentage', label: 'Highest Match' },
-  { id: 'age', icon: 'fa-birthday-cake', label: 'Age' },
-  { id: 'location', icon: 'fa-map-marker-alt', label: 'Location' },
+  { id: 'age-low', icon: 'fa-sort-amount-up', label: 'Age: Low to High' },
+  { id: 'age-high', icon: 'fa-sort-amount-down', label: 'Age: High to Low' },
+  { id: 'name', icon: 'fa-font', label: 'Name A–Z' },
+  { id: 'location', icon: 'fa-map-marker-alt', label: 'Location A–Z' },
 ];
 
 export const AGE_FROM = ['18', '21', '25', '30'];
