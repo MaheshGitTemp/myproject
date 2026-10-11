@@ -16,9 +16,22 @@ export default function ProgressIndicator({ currentStep, totalSteps }) {
         ))}
       </div>
       <div className="flex justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-        {STEP_LABELS.map((label, idx) => (
-          <span key={label} className={currentStep >= idx + 1 ? 'text-brand' : ''}>{label}</span>
-        ))}
+        {STEP_LABELS.map((label, idx) => {
+          const isActive = idx + 1 === currentStep;
+          const isDone = currentStep > idx + 1;
+          return (
+            <span
+              key={label}
+              className={[
+                isDone || isActive ? 'text-brand' : '',
+                // On xs: hide inactive labels to prevent overflow; show all on sm+
+                isActive ? '' : 'hidden sm:inline',
+              ].join(' ').trim()}
+            >
+              {label}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

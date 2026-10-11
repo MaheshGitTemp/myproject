@@ -14,7 +14,7 @@ export default function WizardLayout() {
         subtitle="Create Your Profile"
         plainLogo
         actions={
-          <Link to="/login" className="hidden sm:flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-dark text-white rounded-xl font-semibold text-sm transition shadow-sm">
+          <Link to="/login" className="flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-4 sm:py-2 sm:bg-brand sm:hover:bg-brand-dark text-brand sm:text-white rounded-xl font-semibold text-sm sm:text-base sm:shadow-sm transition">
             <i aria-hidden="true" className="fas fa-right-to-bracket" /> Login
           </Link>
         }
