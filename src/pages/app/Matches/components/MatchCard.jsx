@@ -1,7 +1,7 @@
 // Grid card. `mutual` shows the "Mutual" ribbon; index drives the staggered slide-up.
 export default function MatchCard({ profile: p, index, mutual, onOpen, onRemove, onMessage }) {
   return (
-    <div onClick={() => onOpen(p)} className="glass rounded-3xl overflow-hidden card-shadow card-hover relative group cursor-pointer" style={{ animation: `slideUp 0.5s ease-out ${index * 0.08}s both` }}>
+    <div onClick={() => onOpen(p)} className="glass rounded-3xl overflow-hidden card-shadow card-hover relative group cursor-pointer active:scale-[0.98] active:shadow-lg transition-transform" style={{ animation: `slideUp 0.5s ease-out ${index * 0.08}s both` }}>
       <div className="relative aspect-[3/4] overflow-hidden bg-slate-200 dark:bg-slate-700">
         <img loading="lazy" decoding="async" src={p.image} className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700" alt={p.name} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />

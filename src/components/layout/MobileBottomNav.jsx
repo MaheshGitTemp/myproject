@@ -19,7 +19,7 @@ export default function MobileBottomNav({ active = 'me', badges = {}, badgeTop =
   const items = lastItem === 'dashboard' ? [...ITEMS.slice(0, -1), DASHBOARD_ITEM] : ITEMS;
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 glass-strong border-t border-slate-200/50 dark:border-slate-700/50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe">
-      <div className="flex justify-around items-center h-16 max-w-md mx-auto px-2">
+      <div className="flex justify-around items-center h-16 w-full px-2">
         {items.map((item) => {
           const isActive = item.key === active;
           const badge = badges[item.key];
@@ -27,6 +27,7 @@ export default function MobileBottomNav({ active = 'me', badges = {}, badgeTop =
             <Link
               key={item.key}
               to={item.to}
+              aria-current={isActive ? 'page' : undefined}
               className={`nav-item${isActive ? ' nav-item-active' : ''} flex flex-col items-center gap-1 py-2 px-3${isActive ? '' : ' text-slate-400'}${badge ? ' relative' : ''}`}
             >
               <i aria-hidden="true" className={`fas ${item.icon} text-xl transition-transform`} />

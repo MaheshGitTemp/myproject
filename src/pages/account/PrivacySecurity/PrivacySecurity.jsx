@@ -15,14 +15,18 @@ export default function PrivacySecurity() {
   const { showToast } = useToast();
   const [privacy, setPrivacy] = useState(INITIAL_PRIVACY);
   const [blocked, setBlocked] = useState(INITIAL_BLOCKED);
+  const [confirmUnblockId, setConfirmUnblockId] = useState(null);
 
   const setFlag = (key) => (value) => setPrivacy((p) => ({ ...p, [key]: value }));
 
   function unblockUser(id) {
-    if (window.confirm('Are you sure you want to unblock this user? They will be able to see your profile again.')) {
-      setBlocked((list) => list.filter((u) => u.id !== id));
-      showToast('User Unblocked', 'The user has been successfully unblocked.', 'success', { duration: 3000 });
-    }
+    setConfirmUnblockId(id);
+  }
+
+  function confirmUnblock() {
+    setBlocked((list) => list.filter((u) => u.id !== confirmUnblockId));
+    showToast('User Unblocked', 'The user has been successfully unblocked.', 'success', { duration: 3000 });
+    setConfirmUnblockId(null);
   }
 
   function saveSettings() {
@@ -84,21 +88,34 @@ export default function PrivacySecurity() {
 
         <div className="space-y-3">
           {blocked.map((user) => (
-            <div key={user.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
-              <div className="flex items-center gap-3">
-                <img loading="lazy" decoding="async" src={user.image} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600" alt={user.name} />
-                <div>
-                  <div className="font-semibold text-sm text-slate-800 dark:text-white">{user.name}</div>
-                  <div className="text-xs text-slate-500">{`Blocked: ${user.date}`}</div>
+            <div key={user.id} className="flex flex-col gap-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img loading="lazy" decoding="async" src={user.image} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600" alt={user.name} />
+                  <div>
+                    <div className="font-semibold text-sm text-slate-800 dark:text-white">{user.name}</div>
+                    <div className="text-xs text-slate-500">{`Blocked: ${user.date}`}</div>
+                  </div>
                 </div>
+                {confirmUnblockId !== user.id && (
+                  <button
+                    type="button"
+                    onClick={() => unblockUser(user.id)}
+                    className="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold hover:bg-brand hover:text-white hover:border-brand transition"
+                  >
+                    Unblock
+                  </button>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => unblockUser(user.id)}
-                className="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold hover:bg-brand hover:text-white hover:border-brand transition"
-              >
-                Unblock
-              </button>
+              {confirmUnblockId === user.id && (
+                <div className="flex items-center justify-between gap-2 bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-sm">
+                  <span className="text-slate-700 dark:text-slate-200 text-xs">Unblock this user? They&apos;ll see your profile again.</span>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button type="button" onClick={() => setConfirmUnblockId(null)} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition">Cancel</button>
+                    <button type="button" onClick={confirmUnblock} className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition">Confirm</button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

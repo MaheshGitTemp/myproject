@@ -5,6 +5,10 @@ const FADE = {
   enter: 'transition ease-out duration-150', enterFrom: 'opacity-0', enterTo: 'opacity-100',
   leave: 'transition ease-in duration-75', leaveFrom: 'opacity-100', leaveTo: 'opacity-0',
 };
+const SLIDE = {
+  enter: 'transition ease-out duration-300', enterFrom: 'translate-x-full', enterTo: 'translate-x-0',
+  leave: 'transition ease-in duration-300', leaveFrom: 'translate-x-0', leaveTo: 'translate-x-full',
+};
 const ITEM = 'flex items-center gap-3 px-4 py-3 rounded-xl';
 const IDLE = 'hover:bg-slate-100 dark:hover:bg-slate-800';
 const ACTIVE = 'bg-brand-soft dark:bg-brand/10 text-brand font-semibold';
@@ -18,7 +22,7 @@ export default function AppMenuDrawer({ open, onClose, items, active, member, lo
   return (
     <Transition show={open} {...FADE} className="fixed inset-0 z-50 md:hidden">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute right-0 top-0 bottom-0 w-80 glass-strong p-6 animate-slide-up overflow-y-auto hide-scrollbar" onClick={(e) => e.stopPropagation()}>
+      <Transition show={open} {...SLIDE} className="absolute right-0 top-0 bottom-0 w-80 glass-strong p-6 overflow-y-auto hide-scrollbar" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-heading font-bold">Menu</h3>
           <button type="button" onClick={onClose} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center" aria-label="Close"><i aria-hidden="true" className="fas fa-times text-xl" /></button>
@@ -50,7 +54,7 @@ export default function AppMenuDrawer({ open, onClose, items, active, member, lo
             </>
           )}
         </nav>
-      </div>
+      </Transition>
     </Transition>
   );
 }

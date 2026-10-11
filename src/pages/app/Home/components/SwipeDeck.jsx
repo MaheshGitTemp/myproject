@@ -48,7 +48,7 @@ export default function SwipeDeck({ profiles, onDone, onReset, onInfo }) {
 
   return (
     <>
-      <div className="flex-1 relative flex items-center justify-center">
+      <div className="flex-1 relative flex items-center justify-center" style={{ touchAction: 'pan-y' }}>
         {profiles.length === 0 ? (
           <div className="text-center p-8 glass rounded-3xl card-shadow animate-bounce-in">
             <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mx-auto mb-4"><i aria-hidden="true" className="fas fa-check-circle text-3xl text-brand" /></div>
