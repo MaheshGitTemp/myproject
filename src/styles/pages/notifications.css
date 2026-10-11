@@ -1,0 +1,25 @@
+/* Page-specific styles: Notifications / Proposals (tab buttons + status pills).
+   Scoped with :where() so specificity stays identical to the original rules. */
+:where(.page-notifications) .tab-btn.active {
+  color: #a84040;
+  border-bottom: 2px solid #a84040;
+  font-weight: 700;
+}
+:where(.page-notifications) .tab-btn:not(.active) {
+  color: #64748b;
+  border-bottom: 2px solid transparent;
+}
+:where(.page-notifications) .tab-btn:not(.active):hover {
+  color: #a84040;
+}
+
+:where(.page-notifications) .status-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.dark :where(.page-notifications) .status-pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+:where(.page-notifications) .status-accepted { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.dark :where(.page-notifications) .status-accepted { background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+:where(.page-notifications) .status-rejected { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.dark :where(.page-notifications) .status-rejected { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
+
+/* this page's glass border is a touch more transparent than the shared account style */
+:where(.page-notifications) .glass { border: 1px solid rgba(255, 255, 255, 0.3); }
+.dark :where(.page-notifications) .glass { border: 1px solid rgba(255, 255, 255, 0.08); }

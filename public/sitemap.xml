@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TODO: replace www.example.com with your real domain -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://www.example.com/login.html</loc></url>
+  <url><loc>https://www.example.com/register.html</loc></url>
+  <url><loc>https://www.example.com/forgot-password.html</loc></url>
+  <url><loc>https://www.example.com/help-support.html</loc></url>
+  <url><loc>https://www.example.com/terms-privacy.html</loc></url>
+  <url><loc>https://www.example.com/membership.html</loc></url>
+</urlset>

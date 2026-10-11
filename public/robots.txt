@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Disallow: /index.html
+Disallow: /dashboard.html
+Disallow: /matches.html
+Disallow: /search.html
+Disallow: /chat.html
+Disallow: /notifications.html
+Disallow: /me.html
+Disallow: /edit-profile.html
+Disallow: /gallery.html
+Disallow: /change-password.html
+Disallow: /close-account.html
+Disallow: /profile-security.html
+Disallow: /profile-details.html
+
+# TODO: replace with your real domain
+Sitemap: https://www.example.com/sitemap.xml

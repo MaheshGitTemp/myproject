@@ -1,0 +1,75 @@
+/* Page-specific styles: close-account.html
+   (the repeated .glass / .nav-item-active overrides now live in styles/account.css)
+
+   This page ALSO redefines the global .form-input (padding, background, focus ring). That is scoped to
+   .page-close-account (set on this page's layout) so it cannot change inputs on other pages.
+   :where() keeps the original specificity. */
+
+:where(.page-close-account) .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.dark :where(.page-close-account) .form-input {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+:where(.page-close-account) .form-input:focus {
+    outline: none;
+    border-color: #a84040;
+    box-shadow: 0 0 0 3px rgba(168, 64, 64, 0.1);
+    background: #fff;
+}
+
+.dark :where(.page-close-account) .form-input:focus {
+    background: #0f172a;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.dark .form-label {
+    color: #94a3b8;
+}
+
+.custom-checkbox {
+    appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid #cbd5e1;
+    border-radius: 0.25rem;
+    background: white;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.custom-checkbox:checked {
+    background: #a84040;
+    border-color: #a84040;
+}
+
+.custom-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 0.8rem;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+}

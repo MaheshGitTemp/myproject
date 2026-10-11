@@ -1,0 +1,12 @@
+/* OTP boxes - shared by Register and Forgot Password (identical rules in both original page CSS files) */
+
+.otp-input {
+    width: 3rem;
+    height: 3.5rem;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: bold;
+    caret-color: #a84040;
+}
+
+@media (max-width: 640px) { .otp-input { width: 2.5rem; height: 3rem; font-size: 1rem; } }

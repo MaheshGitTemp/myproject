@@ -1,0 +1,238 @@
+/* =========================================
+   GLOBAL STYLES - Telugu Sambandham
+   ========================================= */
+
+/* 1. Base & Typography */
+body { 
+    font-family: 'Open Sans', sans-serif; 
+    -webkit-tap-highlight-color: transparent; 
+}
+h1, h2, h3, h4, h5, h6 { 
+    font-family: 'Montserrat', sans-serif; 
+}
+
+/* 2. Glassmorphism */
+.glass { 
+    background: rgba(255, 255, 255, 0.75); 
+    backdrop-filter: blur(20px) saturate(180%); 
+    -webkit-backdrop-filter: blur(20px) saturate(180%); 
+    border: 1px solid rgba(255, 255, 255, 0.3); 
+}
+.dark .glass { 
+    background: rgba(30, 41, 59, 0.75); 
+    border: 1px solid rgba(255, 255, 255, 0.08); 
+}
+.glass-strong { 
+    background: rgba(255, 255, 255, 0.95); 
+    backdrop-filter: blur(30px) saturate(200%); 
+}
+.dark .glass-strong { 
+    background: rgba(15, 23, 42, 0.95); 
+}
+
+/* 3. Cards & Shadows */
+.card-shadow { 
+    box-shadow: 0 10px 25px -5px rgba(168, 64, 64, 0.15), 0 8px 10px -6px rgba(0,0,0,0.1); 
+}
+.dark .card-shadow { 
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); 
+}
+.card-hover { 
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+}
+.card-hover:hover { 
+    transform: translateY(-8px) scale(1.02); 
+    box-shadow: 0 25px 50px -12px rgba(168, 64, 64, 0.35); 
+}
+.list-card { 
+    transition: all 0.3s ease; 
+}
+.list-card:hover { 
+    background: rgba(168, 64, 64, 0.05); 
+    transform: translateX(4px); 
+}
+
+/* 4. Text & Gradients */
+.gradient-text { 
+    background: linear-gradient(135deg, #a84040 0%, #8B0000 100%); 
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent; 
+    background-clip: text; 
+}
+
+/* 5. Utilities */
+.pb-safe { 
+    padding-bottom: env(safe-area-inset-bottom); 
+}
+.hide-scrollbar::-webkit-scrollbar { 
+    display: none; 
+}
+.hide-scrollbar { 
+    -ms-overflow-style: none; 
+    scrollbar-width: none; 
+}
+
+/* 6. Animations & Keyframes */
+@keyframes fadeIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 70% { transform: scale(0.9); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes shimmerMove { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes viewFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes messageSlide { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes swipeRight { to { transform: translateX(150%) rotate(20deg); opacity: 0; } }
+@keyframes swipeLeft { to { transform: translateX(-150%) rotate(-20deg); opacity: 0; } }
+
+/* 7. Components */
+.tab-indicator { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.online-dot { animation: onlinePulse 2s ease-in-out infinite; }
+@keyframes onlinePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } }
+.floating-shape { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.3; pointer-events: none; }
+.new-badge { background: linear-gradient(90deg, #a84040, #be7e80, #a84040); background-size: 200% 100%; animation: shimmerMove 2s linear infinite; }
+.view-transition { animation: viewFade 0.4s ease-out; }
+.filter-chip { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.filter-chip:hover { transform: scale(1.05); }
+.quick-action { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.quick-action:hover { transform: scale(1.1); }
+.quick-action:active { transform: scale(0.95); }
+.modal-backdrop { animation: fadeIn 0.3s ease-out; }
+.modal-content-desktop { animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.gallery-slide { scroll-snap-type: x mandatory; }
+.gallery-slide > div { scroll-snap-align: center; }
+.tab-active { color: #a84040; border-bottom: 2px solid #a84040; }
+.tab-inactive { color: #64748b; border-bottom: 2px solid transparent; }
+.tab-inactive:hover { color: #a84040; }
+.verified-pulse { animation: verifiedPulse 2s ease-in-out infinite; }
+@keyframes verifiedPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); } }
+.toast-enter { animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* 8. Navigation & Specific Pages */
+.nav-item-active { color: #a84040; }
+.nav-item-active i { transform: translateY(-2px); }
+
+/* Chat Scrollbar */
+#messagesContainer::-webkit-scrollbar { width: 6px; }
+#messagesContainer::-webkit-scrollbar-track { background: transparent; }
+#messagesContainer::-webkit-scrollbar-thumb { background-color: rgba(168, 64, 64, 0.2); border-radius: 20px; }
+#messagesContainer::-webkit-scrollbar-thumb:hover { background-color: rgba(168, 64, 64, 0.4); }
+textarea.hide-scrollbar { field-sizing: content; }
+
+/* Search Scrollbar */
+.search-form-scroll::-webkit-scrollbar { width: 6px; }
+.search-form-scroll::-webkit-scrollbar-track { background: transparent; }
+.search-form-scroll::-webkit-scrollbar-thumb { background-color: rgba(168, 64, 64, 0.3); border-radius: 20px; }
+
+/* Swipe Cards (Index) */
+.swipe-card { transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
+.swipe-card.swiping-right { animation: swipeRight 0.5s forwards; }
+.swipe-card.swiping-left { animation: swipeLeft 0.5s forwards; }
+
+/* Form Inputs */
+.form-input {
+    width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem;
+    border: 1px solid #e2e8f0; background-color: #ffffff; color: #334155;
+    font-size: 0.875rem; transition: all 0.2s;
+}
+.dark .form-input { background-color: #1e293b; border-color: #334155; color: #f1f5f9; }
+.form-input:focus { outline: none; border-color: #a84040; box-shadow: 0 0 0 2px rgba(168, 64, 64, 0.2); }
+select.form-input {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
+    padding-right: 2.5rem; -webkit-appearance: none; appearance: none;
+}
+
+/* Password Checklist */
+.checklist-item { transition: all 0.3s ease; }
+.checklist-item.valid { color: #16a34a; }
+.dark .checklist-item.valid { color: #4ade80; }
+
+
+
+/* =========================================
+9. Sidebar Navigation - Unified Account Layout
+========================================= */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569; /* slate-600 */
+    transition: all 0.2s;
+}
+.dark .sidebar-link {
+    color: #cbd5e1; /* slate-300 */
+}
+.sidebar-link:hover {
+    background-color: rgba(168, 64, 64, 0.05);
+    color: #a84040;
+}
+.dark .sidebar-link:hover {
+    background-color: rgba(168, 64, 64, 0.1);
+    color: #f87171;
+}
+.sidebar-link.active {
+    background-color: rgba(168, 64, 64, 0.1);
+    color: #a84040;
+    font-weight: 600;
+}
+.dark .sidebar-link.active {
+    background-color: rgba(168, 64, 64, 0.2);
+    color: #fca5a5;
+}
+
+/* =========================================
+   10. Shared component styles
+   (promoted from page-level <style> blocks)
+========================================= */
+.nav-item {
+    transition: all 0.2s ease;
+}
+.nav-item:hover i {
+    transform: scale(1.1);
+}
+.section-nav-item.active {
+    background: linear-gradient(135deg, #a84040 0%, #8B0000 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(168, 64, 64, 0.3);
+}
+.section-nav-item:not(.active):hover {
+    background: rgba(168, 64, 64, 0.05);
+    color: #a84040;
+}
+[x-cloak] {
+    display: none !important;
+}
+h1, h2, h3, h4, h5 {
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* =========================================
+   11. Brand, accessibility & motion
+========================================= */
+.bg-brand-gradient { background: linear-gradient(135deg, #a84040 0%, #8B0000 100%); }
+
+.skip-link {
+    position: absolute; left: -9999px; top: 0; z-index: 100;
+    padding: 0.75rem 1.25rem; background: #a84040; color: #fff;
+    font-weight: 600; border-radius: 0 0 0.75rem 0.75rem;
+}
+.skip-link:focus { left: 1rem; }
+
+:focus-visible { outline: 2px solid #a84040; outline-offset: 2px; }
+.dark :focus-visible { outline-color: #fca5a5; }
+.form-input:focus-visible { outline: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+

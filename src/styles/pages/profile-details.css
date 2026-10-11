@@ -1,0 +1,30 @@
+/* Page-specific styles: Profile Details (tab buttons + photo watermark).
+   The two .glass / .nav-item-active overrides of the original page are the shared ones in account.css.
+   :where() keeps specificity identical to the original rules. */
+:where(.page-profile-details) .tab-btn.active {
+  color: #a84040;
+  border-bottom: 2px solid #a84040;
+  font-weight: 700;
+}
+:where(.page-profile-details) .tab-btn:not(.active) {
+  color: #64748b;
+  border-bottom: 2px solid transparent;
+}
+:where(.page-profile-details) .tab-btn:not(.active):hover {
+  color: #a84040;
+}
+
+:where(.page-profile-details) .watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 1rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: 2px;
+  z-index: 10;
+}

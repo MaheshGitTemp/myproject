@@ -1,0 +1,12 @@
+/* Page-specific styles: register.html */
+
+.radio-card:checked + div {
+    border-color: #a84040;
+    background-color: rgba(168, 64, 64, 0.05);
+    color: #a84040;
+}
+
+.dark .radio-card:checked + div {
+    background-color: rgba(168, 64, 64, 0.2);
+    color: #fca5a5;
+}

@@ -1,0 +1,22 @@
+/* Shared by every logged-in "account" page (Dashboard, Edit Profile, Gallery, Privacy & Security,
+   Change Password, Close Account). In the original, each of these pages repeated the same two
+   overrides of global classes. In a single-page app all CSS is loaded together, so they are scoped to
+   .account-page (set by AccountLayout) to keep Login/Register/etc. unchanged.
+   :where() keeps the specificity identical to the original rules, so Tailwind utilities such as
+   border-gold/30 or bg-brand-soft/30 still win over .glass, as they did in the original. */
+
+:where(.account-page) .glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.dark :where(.account-page) .glass {
+    background: rgba(30, 41, 59, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:where(.account-page) .nav-item-active i {
+    transform: scale(1.15);
+}
