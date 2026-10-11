@@ -38,13 +38,37 @@ export default function ChatWindow({ chat, draft, onDraft, onBack, onSend }) {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [chat?.id, count]);
 
+  // Sync chat panel height with visual viewport (iOS keyboard shrinks it)
+  useEffect(() => {
+    function setVh() {
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.setProperty('--chat-vh', `${h}px`);
+    }
+    setVh();
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', setVh);
+      vv.addEventListener('scroll', setVh);
+    } else {
+      window.addEventListener('resize', setVh);
+    }
+    return () => {
+      if (vv) {
+        vv.removeEventListener('resize', setVh);
+        vv.removeEventListener('scroll', setVh);
+      } else {
+        window.removeEventListener('resize', setVh);
+      }
+    };
+  }, []);
+
   function send() {
     if (!draft.trim()) return;
     onSend(draft.trim());
   }
 
   return (
-    <div className={`flex-1 flex-col bg-white/30 dark:bg-slate-900/30 relative ${chat ? 'flex' : 'hidden md:flex'}`}>
+    <div className={`flex-1 flex-col bg-white/30 dark:bg-slate-900/30 relative ${chat ? 'flex' : 'hidden md:flex'}`} style={{ height: 'var(--chat-vh, 100%)' }}>
       {!chat ? <EmptyState /> : (
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
@@ -75,7 +99,14 @@ export default function ChatWindow({ chat, draft, onDraft, onBack, onSend }) {
                 <textarea
                   value={draft}
                   onChange={(e) => onDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); send(); } }}
+                  onKeyDown={(e) => {
+                    // Only send on Enter for non-touch devices (mobile keyboards use Enter for newline)
+                    const isTouch = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+                    if (e.key === 'Enter' && !e.shiftKey && !isTouch) {
+                      e.preventDefault();
+                      send();
+                    }
+                  }}
                   rows={1}
                   placeholder="Type a message..."
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition text-sm resize-none hide-scrollbar"
