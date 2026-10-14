@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Transition from '../ui/Transition.jsx';
 
 const FADE = {
@@ -13,16 +13,25 @@ const ITEM = 'flex items-center gap-3 px-4 py-3 rounded-xl';
 const IDLE = 'hover:bg-slate-100 dark:hover:bg-slate-800';
 const ACTIVE = 'bg-brand-soft dark:bg-brand/10 text-brand font-semibold';
 
-// Phone menu drawer used by Matches / Search / Chat. Each page passes its own list (they differ in the original).
-//   items    : [{ key, to, icon, label, badge? }]
-//   active   : key of the highlighted item
+// Standardized phone menu drawer used on every page (slide-in from right, "Menu" header, member card on top).
+// The nav list is FIXED here (single source of truth) rather than passed per page, so every page shows the same menu.
+//   open     : whether the drawer is shown
+//   onClose  : close the drawer
 //   member   : when given, shows the gradient member card on top
-//   logoutTo : when given, shows a Logout link at the bottom (logoutDivider=false: no rule above it, as on Home)
-export default function AppMenuDrawer({ open, onClose, items, active, member, logoutTo, logoutDivider = true, onLogout }) {
+//   onLogout : handler invoked when Logout is tapped (callers decide: direct sign-out, or open a confirmation modal)
+// Highlighting is driven by the current route: the item whose `to` matches the pathname is active.
+const FIXED_ITEMS = [
+  { key: 'me', to: '/me', icon: 'fa-user', label: 'My Profile' },
+  { key: 'dashboard', to: '/dashboard', icon: 'fa-tachometer-alt', label: 'Dashboard' },
+  { key: 'settings', to: '/profile-security', icon: 'fa-cog', label: 'Settings' },
+];
+
+export default function AppMenuDrawer({ open, onClose, member, onLogout }) {
+  const { pathname } = useLocation();
   return (
     <Transition show={open} {...FADE} className="fixed inset-0 z-50 md:hidden">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <Transition show={open} {...SLIDE} className="absolute right-0 top-0 bottom-0 w-80 glass-strong p-6 overflow-y-auto hide-scrollbar" onClick={(e) => e.stopPropagation()}>
+      <Transition show={open} {...SLIDE} className="absolute right-0 top-0 bottom-0 w-80 glass-strong p-6 flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-heading font-bold">Menu</h3>
           <button type="button" onClick={onClose} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center" aria-label="Close"><i aria-hidden="true" className="fas fa-times text-xl" /></button>
@@ -38,22 +47,17 @@ export default function AppMenuDrawer({ open, onClose, items, active, member, lo
             </div>
           </div>
         )}
-        <nav className="flex flex-col gap-1">
-          {items.map((item) => (
-            <Link key={item.key} to={item.to} className={`${ITEM} ${item.key === active ? ACTIVE : IDLE}`}>
+        <nav className="flex flex-col gap-1 flex-1 overflow-y-auto hide-scrollbar">
+          {FIXED_ITEMS.map((item) => (
+            <Link key={item.key} to={item.to} onClick={onClose} className={`${ITEM} ${pathname === item.to ? ACTIVE : IDLE}`}>
               <i aria-hidden="true" className={`fas ${item.icon} w-5`} /> {item.label}
-              {item.badge ? <span className="ml-auto bg-brand text-white text-xs px-2 py-1 rounded-full">{item.badge}</span> : null}
             </Link>
           ))}
-          {logoutTo && (
-            <>
-              {logoutDivider && <div className="border-t border-slate-200 dark:border-slate-700 my-2" />}
-              <Link to={logoutTo} onClick={onLogout} className={`${ITEM} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}>
-                <i aria-hidden="true" className="fas fa-sign-out-alt w-5" /> Logout
-              </Link>
-            </>
-          )}
         </nav>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-2" />
+        <button type="button" onClick={() => { onLogout?.(); onClose(); }} className={`${ITEM} w-full text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 mt-auto`}>
+          <i aria-hidden="true" className="fas fa-sign-out-alt w-5" /> Logout
+        </button>
       </Transition>
     </Transition>
   );

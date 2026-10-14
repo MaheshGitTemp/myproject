@@ -4,8 +4,8 @@ import FloatingShapes from '../components/layout/FloatingShapes.jsx';
 import AccountSidebar from '../components/layout/AccountSidebar.jsx';
 import LogoutModal from '../components/layout/LogoutModal.jsx';
 import MainHeader from '../components/layout/MainHeader.jsx';
+import AppMenuDrawer from '../components/layout/AppMenuDrawer.jsx';
 import MobileBottomNav from '../components/layout/MobileBottomNav.jsx';
-import MobileMenuDrawer from '../components/layout/MobileMenuDrawer.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { CURRENT_MEMBER } from '../services/profileService.js';
 import '../styles/account.css';
@@ -67,7 +67,7 @@ export default function AccountLayout({
         </div>
       </main>
 
-      <MobileMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} active={navActive} chatBadge={member.unread.chat} onLogout={askLogout} />
+      <AppMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} member={member} onLogout={askLogout} />
       <LogoutModal open={logoutOpen} onCancel={() => setLogoutOpen(false)} onConfirm={confirmLogout} />
 
       <MobileBottomNav active={navActive} badges={badges} lastItem={navLastItem} />

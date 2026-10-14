@@ -5,7 +5,6 @@ import FloatingShapes from '../components/layout/FloatingShapes.jsx';
 import LogoutModal from '../components/layout/LogoutModal.jsx';
 import MainHeader from '../components/layout/MainHeader.jsx';
 import MobileBottomNav from '../components/layout/MobileBottomNav.jsx';
-import MobileMenuDrawer from '../components/layout/MobileMenuDrawer.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import useBodyClass from '../hooks/useBodyClass.js';
 import { CURRENT_MEMBER } from '../services/profileService.js';
@@ -13,9 +12,9 @@ import { CURRENT_MEMBER } from '../services/profileService.js';
 const BODY = 'bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-safe-nav md:pb-10';
 
 // Shell for the main logged-in pages: full header, phone drawer, bottom nav.
-//   variant       : 'me'  (/me: logout confirmation modal)  |  'app' (Matches / Search / Chat: logout is a link)
+//   variant       : 'me'  (/me: logout confirmation modal)  |  'app' (Matches / Search / Chat: logout signs out directly)
 //   active        : home | matches | search | chat | me   (header + bottom nav highlight)
-//   drawer        : (app variant) { items, member?, logout?, logoutDivider? } - each page has its own phone menu
+//   drawer        : accepted for backward-compat but no longer read — the phone menu is now the standardized AppMenuDrawer
 //   mainClassName / mainStyle : <main> differs per page
 //   overlays      : modals / toasts rendered after <main>
 //   children      : nodes, or a function receiving { askLogout }
@@ -42,6 +41,11 @@ export default function MainLayout({
     signOut();
     navigate('/login');
   }
+  // 'app' variant signs out directly from the drawer; 'me' variant opens the confirmation modal.
+  function handleAppLogout() {
+    signOut();
+    navigate('/login');
+  }
 
   return (
     <>
@@ -52,10 +56,10 @@ export default function MainLayout({
         {typeof children === 'function' ? children({ askLogout }) : children}
       </main>
       {isApp ? (
-        drawer && <AppMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} active={active} member={drawer.member ? member : null} items={drawer.items} logoutTo={drawer.logout ? '/login' : undefined} logoutDivider={drawer.logoutDivider !== false} onLogout={signOut} />
+        <AppMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} member={member} onLogout={handleAppLogout} />
       ) : (
         <>
-          <MobileMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} active={active} chatBadge={member.unread.chat} onLogout={askLogout} />
+          <AppMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} member={member} onLogout={askLogout} />
           <LogoutModal open={logoutOpen} onCancel={() => setLogoutOpen(false)} onConfirm={confirmLogout} />
         </>
       )}
