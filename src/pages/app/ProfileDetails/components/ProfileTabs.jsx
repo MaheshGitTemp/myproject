@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import Transition from '../../../../components/ui/Transition.jsx';
 import { ABOUT_ROWS, ASTRO_ROWS, FAMILY_ROWS, TABS } from '../profileDetailsData.js';
 
@@ -25,6 +24,7 @@ function Rows({ profile, rows }) {
 
 export default function ProfileTabs({ profile: p }) {
   const [tab, setTab] = useState('about');
+  const [contactUnlocked, setContactUnlocked] = useState(false);
   const first = (p.name || '').split(' ')[0];
   const c = p.compatibility;
   const panel = (key) => ({ show: tab === key, className: 'p-6', ...ENTER });
@@ -64,11 +64,6 @@ export default function ProfileTabs({ profile: p }) {
           </div>
         </div>
         <Rows profile={p} rows={ASTRO_ROWS} />
-        <div className="mt-6 text-center">
-          <button type="button" className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-soft dark:bg-brand/10 border border-brand-light/30 dark:border-brand/30 rounded-lg text-brand dark:text-brand-light font-semibold text-sm hover:bg-brand/10 dark:hover:bg-brand/20 transition-colors">
-            <i aria-hidden="true" className="fas fa-download" /> Download Horoscope (PDF)
-          </button>
-        </div>
       </Transition>
 
       <Transition {...panel('gallery')}>
@@ -88,18 +83,33 @@ export default function ProfileTabs({ profile: p }) {
 
       <Transition {...panel('contact')}>
         <h3 className={`${H3} mb-4`}>Contact Details</h3>
-        <div className="bg-slate-50/80 dark:bg-slate-900/50 rounded-xl p-8 text-center border border-slate-200 dark:border-slate-700">
-          <div className="w-16 h-16 bg-brand-soft dark:bg-brand/10 rounded-full flex items-center justify-center mx-auto mb-4"><i aria-hidden="true" className="fas fa-lock text-2xl text-brand dark:text-brand-light" /></div>
-          <h4 className="text-lg font-heading font-bold text-slate-800 dark:text-white mb-2">Contact Details Locked</h4>
-          <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm max-w-md mx-auto">Upgrade to Gold membership to view phone numbers, email addresses, and connect directly.</p>
-          <div className="max-w-xs mx-auto mb-8 space-y-3 opacity-60">
-            <div className="bg-slate-300 dark:bg-slate-600 rounded h-5 w-3/4 mx-auto blur-sm" />
-            <div className="bg-slate-300 dark:bg-slate-600 rounded h-5 w-1/2 mx-auto blur-sm" />
+        {!contactUnlocked ? (
+          <div className="bg-slate-50/80 dark:bg-slate-900/50 rounded-xl p-8 text-center border border-slate-200 dark:border-slate-700">
+            <p className="text-lg font-heading font-bold text-slate-800 dark:text-white mb-2">🎉 Launch Offer</p>
+            <p className="text-slate-500 dark:text-slate-400 mb-4 text-sm max-w-md mx-auto">Unlock this member's contact details at no cost.</p>
+            <p className="mb-6 text-base">
+              <span className="line-through text-slate-400 dark:text-slate-500 mr-2">₹25</span>
+              <span className="text-green-600 dark:text-green-400 font-bold">Free for You</span>
+            </p>
+            <button type="button" onClick={() => setContactUnlocked(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand hover:bg-brand-dark text-white px-8 py-3 text-sm font-bold shadow-lg shadow-brand/30 transition transform hover:scale-105 min-h-[44px]">
+              <i aria-hidden="true" className="fas fa-unlock" /> View Contact Details
+            </button>
           </div>
-          <Link to="/membership" className="inline-flex items-center justify-center rounded-xl bg-brand hover:bg-brand-dark text-white px-8 py-3 text-sm font-bold shadow-lg shadow-brand/30 transition transform hover:scale-105">
-            <i aria-hidden="true" className="fas fa-crown text-gold mr-2" /> Upgrade to Premium
-          </Link>
-        </div>
+        ) : (
+          <div className="bg-slate-50/80 dark:bg-slate-900/50 rounded-xl p-8 border border-green-200 dark:border-green-800">
+            <p className="text-base font-bold text-green-600 dark:text-green-400 mb-6 flex items-center gap-2"><span>✅</span> Contact Information Unlocked</p>
+            <div className="space-y-4 max-w-md">
+              <div className="flex justify-between py-2.5 border-b border-slate-100 dark:border-slate-700">
+                <span className="text-slate-500 dark:text-slate-400 text-sm">Phone Number</span>
+                <span className="text-slate-800 dark:text-white font-semibold text-sm">+91 98765 43210</span>
+              </div>
+              <div className="flex justify-between py-2.5 border-b border-slate-100 dark:border-slate-700">
+                <span className="text-slate-500 dark:text-slate-400 text-sm">Email</span>
+                <span className="text-slate-800 dark:text-white font-semibold text-sm">member@email.com</span>
+              </div>
+            </div>
+          </div>
+        )}
       </Transition>
     </div>
   );

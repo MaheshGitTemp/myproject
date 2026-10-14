@@ -1,10 +1,13 @@
 // Which rows each tab shows. [label, profile field, showGreenDot?]
 export const ABOUT_ROWS = [
-  ['Marital Status', 'maritalStatus'], ['Diet', 'diet', true], ['Education', 'education'],
-  ['Occupation', 'occupation'], ['Annual Income', 'income'], ['Height', 'height'],
+  ['Gender', 'gender'], ['Marital Status', 'maritalStatus'], ['Height', 'height'],
+  ['Diet', 'diet', true], ['Mother Tongue', 'motherTongue'], ['Education', 'education'],
+  ['Occupation', 'occupation'], ['Annual Income', 'income'], ['City', 'city'],
+  ['State', 'state'], ['Working Location', 'workLocation'],
 ];
 export const FAMILY_ROWS = [
   ['Caste / Community', 'caste'], ['Sub-Caste', 'subCaste'], ['Family Type', 'familyType'],
+  ['Native Place', 'nativePlace'], ['Family Status', 'familyStatus'], ['Family Values', 'familyValues'],
   ["Father's Occupation", 'fatherOccupation'], ["Mother's Occupation", 'motherOccupation'], ['Siblings', 'siblings'],
 ];
 export const ASTRO_ROWS = [

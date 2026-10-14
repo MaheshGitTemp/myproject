@@ -1,6 +1,7 @@
 import { ACTIONS } from '../profileDetailsData.js';
 
-const summaryLine = (p) => [p.age ? `${p.age} yrs` : '', p.height, p.occupation, p.city].filter(Boolean).join(' • ');
+const locationLine = (p) => [p.city, p.state].filter(Boolean).join(', ');
+const summaryLine = (p) => [p.age ? `${p.age} yrs` : '', p.height, p.occupation, locationLine(p)].filter(Boolean).join(' • ');
 
 export function ProfileHeaderCard({ profile: p }) {
   return (

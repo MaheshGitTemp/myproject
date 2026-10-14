@@ -4,7 +4,7 @@ import FloatingShapes from '../../../components/layout/FloatingShapes.jsx';
 import LogoutModal from '../../../components/layout/LogoutModal.jsx';
 import MainHeader from '../../../components/layout/MainHeader.jsx';
 import MobileBottomNav from '../../../components/layout/MobileBottomNav.jsx';
-import MobileMenuDrawer from '../../../components/layout/MobileMenuDrawer.jsx';
+import AppMenuDrawer from '../../../components/layout/AppMenuDrawer.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import { getProfileById, normalizeId } from '../../../services/profileLookupService.js';
@@ -74,7 +74,7 @@ export default function ProfileDetails() {
         )}
       </main>
 
-      <MobileMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} active="search" chatBadge={member.unread.chat} onLogout={askLogout} />
+      <AppMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} member={member} onLogout={askLogout} />
       <LogoutModal open={logoutOpen} onCancel={() => setLogoutOpen(false)} onConfirm={confirmLogout} />
 
       <MobileBottomNav active="search" badges={{ chat: 5 }} />
