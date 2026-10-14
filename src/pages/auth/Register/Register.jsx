@@ -9,16 +9,21 @@ import '../../../styles/pages/register.css';
 import ProgressIndicator from './ProgressIndicator.jsx';
 import Step1Basic from './steps/Step1Basic.jsx';
 import Step2Verify from './steps/Step2Verify.jsx';
-import Step3Community from './steps/Step3Community.jsx';
-import Step4Preferences from './steps/Step4Preferences.jsx';
-import Step5Photos from './steps/Step5Photos.jsx';
+import Step3ProfileDetails from './steps/Step3ProfileDetails.jsx';
+import Step4Community from './steps/Step4Community.jsx';
+import Step5Preferences from './steps/Step5Preferences.jsx';
+import Step6Photos from './steps/Step6Photos.jsx';
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 // Every field of the wizard. Defaults match the pre-selected options in register.html.
 const INITIAL_FORM = {
   profileFor: 'self',
   firstName: '', lastName: '', phone: '', email: '', password: '',
+  // Profile Details (own attributes) — distinct keys from the preference fields below.
+  gender: '', dob: '', profileHeight: '', profileMaritalStatus: '',
+  profileEducation: '', profileOccupation: '', salary: '', city: '', state: '',
+  aboutMe: '', gothram: '', preferredLocation: '',
   subCaste: '', rasi: '', nakshatra: '', padam: '',
   lookingFor: 'bride', ageFrom: '21', ageTo: '28',
   height: 'Any Height', maritalStatus: 'Any', education: 'Any Education', occupation: 'Any Occupation',
@@ -137,15 +142,19 @@ export default function Register() {
           </Transition>
 
           <Transition show={currentStep === 3} {...STEP_TRANSITION}>
-            <Step3Community form={form} set={set} update={update} onBack={prevStep} onNext={nextStep} />
+            <Step3ProfileDetails form={form} set={set} update={update} onBack={prevStep} onNext={nextStep} />
           </Transition>
 
           <Transition show={currentStep === 4} {...STEP_TRANSITION}>
-            <Step4Preferences form={form} set={set} update={update} onBack={prevStep} onNext={nextStep} />
+            <Step4Community form={form} set={set} update={update} onBack={prevStep} onNext={nextStep} />
           </Transition>
 
           <Transition show={currentStep === 5} {...STEP_TRANSITION}>
-            <Step5Photos onBack={prevStep} />
+            <Step5Preferences form={form} set={set} update={update} onBack={prevStep} onNext={nextStep} />
+          </Transition>
+
+          <Transition show={currentStep === 6} {...STEP_TRANSITION}>
+            <Step6Photos onBack={prevStep} />
           </Transition>
         </form>
       </div>

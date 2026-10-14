@@ -1,3 +1,4 @@
+import FormInput from '../../../../components/ui/FormInput.jsx';
 import RadioCardGroup from '../../../../components/ui/RadioCardGroup.jsx';
 import SelectField from '../../../../components/ui/SelectField.jsx';
 import { AGE_FROM, AGE_TO, EDUCATION, HEIGHTS, LOOKING_FOR, MARITAL_STATUS, OCCUPATION } from '../options.js';
@@ -5,7 +6,7 @@ import StepNav from './StepNav.jsx';
 
 const opt = (v) => <option key={v} value={v}>{v}</option>;
 
-export default function Step4Preferences({ form, set, update, onBack, onNext }) {
+export default function Step5Preferences({ form, set, update, onBack, onNext }) {
   return (
     <>
       <div>
@@ -45,6 +46,8 @@ export default function Step4Preferences({ form, set, update, onBack, onNext }) 
       </div>
 
       <SelectField id="occupation" label="Occupation" options={OCCUPATION} value={form.occupation} onChange={update('occupation')} />
+
+      <FormInput id="preferred-location" label="Preferred Location" type="text" value={form.preferredLocation} onChange={update('preferredLocation')} placeholder="Any / e.g. Hyderabad" />
 
       <StepNav onBack={onBack} onNext={onNext} />
     </>

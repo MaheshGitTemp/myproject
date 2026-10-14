@@ -1,9 +1,10 @@
+import FormInput from '../../../../components/ui/FormInput.jsx';
 import RadioCardGroup from '../../../../components/ui/RadioCardGroup.jsx';
 import SelectField from '../../../../components/ui/SelectField.jsx';
 import { NAKSHATRAS, PADAMS, RASIS, SUB_CASTES } from '../options.js';
 import StepNav from './StepNav.jsx';
 
-export default function Step3Community({ form, set, update, onBack, onNext }) {
+export default function Step4Community({ form, set, update, onBack, onNext }) {
   return (
     <>
       <div>
@@ -23,6 +24,8 @@ export default function Step3Community({ form, set, update, onBack, onNext }) {
       </SelectField>
 
       <SelectField id="sub-caste" label="Sub-Caste *" options={SUB_CASTES} value={form.subCaste} onChange={update('subCaste')} required />
+
+      <FormInput id="gothram" label="Gothram *" type="text" value={form.gothram} onChange={update('gothram')} placeholder="e.g. Vishwakarma" required />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SelectField id="rasi-moon-sign" label="Rasi (Moon Sign)" options={RASIS} value={form.rasi} onChange={update('rasi')} />

@@ -48,4 +48,45 @@ export const OCCUPATION = [
   'Government Employee', 'Architect', 'Designer',
 ];
 
-export const STEP_LABELS = ['Basic', 'Verify', 'Community', 'Preferences', 'Photos'];
+// Own-attribute options for the new Profile Details step (step 3). These lead with a neutral
+// "Select …" placeholder and contain concrete values only — distinct from the preference lists above.
+export const GENDER = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+];
+
+export const PROFILE_HEIGHTS = [
+  { value: '', label: 'Select Height' },
+  `4'10" (147 cm)`, `5'0" (152 cm)`, `5'2" (157 cm)`, `5'4" (162 cm)`,
+  `5'6" (167 cm)`, `5'8" (172 cm)`, `5'10" (177 cm)`, `6'0" (182 cm)`, `6'2" (187 cm)`,
+];
+
+export const PROFILE_MARITAL_STATUS = [
+  { value: '', label: 'Select Status' },
+  'Never Married', 'Widowed', 'Divorced',
+];
+
+export const PROFILE_EDUCATION = [
+  { value: '', label: 'Select Education' },
+  'Bachelors', 'Masters', 'PhD', 'BTech', 'MBBS', 'MBA', 'CA', 'Diploma', 'Other',
+];
+
+export const PROFILE_OCCUPATION = [
+  { value: '', label: 'Select Occupation' },
+  'Software Engineer', 'Doctor', 'Teacher', 'Business Owner',
+  'Government Employee', 'Architect', 'Designer', 'Other',
+];
+
+export const STATES = [
+  { value: '', label: 'Select State' },
+  'Andhra Pradesh', 'Telangana', 'Karnataka', 'Tamil Nadu', 'Kerala',
+  'Maharashtra', 'Delhi', 'Gujarat', 'West Bengal', 'Others',
+];
+
+export const SALARY = [
+  { value: '', label: 'Select Annual Income' },
+  'Below 3 Lakhs', '3 - 5 Lakhs', '5 - 8 Lakhs', '8 - 12 Lakhs',
+  '12 - 18 Lakhs', '18 - 25 Lakhs', '25 - 35 Lakhs', '35 - 50 Lakhs', 'Above 50 Lakhs',
+];
+
+export const STEP_LABELS = ['Basic', 'Verify', 'Details', 'Community', 'Preferences', 'Photos'];

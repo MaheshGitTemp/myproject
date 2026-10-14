@@ -8,7 +8,7 @@ const TIPS = [
   'Upload a mix of close-ups and full-length traditional/casual photos.',
 ];
 
-export default function Step5Photos({ onBack }) {
+export default function Step6Photos({ onBack }) {
   const fileInputRef = useRef(null);
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
