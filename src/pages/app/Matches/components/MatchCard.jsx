@@ -47,7 +47,7 @@ export default function MatchCard({ profile: p, index, mutual, onOpen, onRemove,
           <span>{p.caste}</span>
         </div>
         <div className="flex flex-wrap gap-2 mb-4">
-          <span className="px-2 py-1 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-leaf mr-1" />Pure Veg</span>
+          <span className="px-2 py-1 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-leaf mr-1" />{p.diet}</span>
           <span className="px-2 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-briefcase mr-1" /><span>{p.job}</span></span>
           <span className="px-2 py-1 bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800 rounded text-xs font-bold"><i aria-hidden="true" className="fas fa-star mr-1" /><span>{p.rasi}</span></span>
         </div>
