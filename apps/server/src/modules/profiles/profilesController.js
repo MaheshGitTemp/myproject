@@ -5,7 +5,7 @@ import {
   getProfileByUserId, getPreferencesByUserId, getProfileByMatId,
   upsertProfile, upsertPreferences,
   buildProfileFields, buildPreferenceFields,
-  rowToDetail, prefsToForm,
+  rowToDetail, prefsToForm, updatePrivacy,
 } from './profilesRepo.js';
 import { normalizeMatId } from './matId.js';
 import { isBlockedPair } from '../interactions/blocksRepo.js';
@@ -76,6 +76,35 @@ export async function updateMyProfile(req, res, next) {
  */
 export async function createProfile(req, res, next) {
   return updateMyProfile(req, res, next);
+}
+
+// Coerce an incoming privacy flag to boolean when a boolean / 'true' / 'false'
+// is present, else null (undefined -> null so COALESCE leaves it unchanged).
+function coercePrivacyFlag(val) {
+  if (val === true || val === 'true') return true;
+  if (val === false || val === 'false') return false;
+  return null;
+}
+
+/**
+ * PUT /api/profiles/me/privacy (requireAuth)
+ * Update ONLY the authenticated user's contact-visibility flags
+ * (users.hide_phone / users.hide_email). The member app maps a single
+ * "Hide Contact Information" toggle to both. Returns { ok, hidePhone, hideEmail }.
+ */
+export async function updateMyPrivacy(req, res, next) {
+  try {
+    const body = req.body || {};
+    const hidePhone = coercePrivacyFlag(body.hidePhone);
+    const hideEmail = coercePrivacyFlag(body.hideEmail);
+    if (hidePhone === null && hideEmail === null) {
+      return res.status(400).json({ error: 'no_fields' });
+    }
+    const saved = await updatePrivacy(req.user.id, { hidePhone, hideEmail });
+    res.json({ ok: true, hidePhone: saved.hidePhone, hideEmail: saved.hideEmail });
+  } catch (err) {
+    next(err);
+  }
 }
 
 /**

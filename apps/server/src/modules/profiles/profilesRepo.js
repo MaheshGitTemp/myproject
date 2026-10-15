@@ -336,6 +336,26 @@ export async function upsertPreferences(client, userId, prefs) {
   return rows[0];
 }
 
+/**
+ * Update ONLY the contact-visibility privacy flags on the users row. Pass each
+ * flag as true/false to set it, or null to leave the column unchanged (COALESCE
+ * keeps the existing value). Parameterized: $1 user id, $2 hide_phone,
+ * $3 hide_email. Returns { hidePhone, hideEmail } reflecting the stored row.
+ */
+export async function updatePrivacy(userId, { hidePhone = null, hideEmail = null } = {}) {
+  const { rows } = await query(
+    `UPDATE users
+        SET hide_phone = COALESCE($2, hide_phone),
+            hide_email = COALESCE($3, hide_email),
+            updated_at = now()
+      WHERE id = $1
+      RETURNING hide_phone, hide_email`,
+    [userId, hidePhone, hideEmail],
+  );
+  const row = rows[0] || {};
+  return { hidePhone: row.hide_phone === true, hideEmail: row.hide_email === true };
+}
+
 // ---- Helpers for building persisted field sets -----------------------------
 
 /** Compute full_name from first/last (trimmed). Returns null when both blank. */
@@ -564,6 +584,12 @@ export function rowToDetail(row, { contact = {} } = {}) {
     whatsapp: gated.whatsapp,
     contactUnlocked: gated.contactUnlocked,
     contactLockedReason: gated.contactLockedReason,
+
+    // privacy flags (sourced from the users row; getProfileByUserId/ByMatId
+    // already SELECT u.hide_phone, u.hide_email). Used by the member app's
+    // Privacy & Security "Hide Contact Information" toggle.
+    hidePhone: row.hide_phone === true,
+    hideEmail: row.hide_email === true,
   };
 }
 

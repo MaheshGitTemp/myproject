@@ -1,9 +1,22 @@
-import { Fragment, useState } from 'react';
+// Privacy & Security wiring (FEAT-002):
+//   WIRED to the backend:
+//     - "Hide Contact Information" (hideContact) -> users.hide_phone + users.hide_email
+//       via accountService.getPrivacy() (seed on mount) and
+//       accountService.updatePrivacy({hidePhone:v, hideEmail:v}) (toggle / Save).
+//     - "Blocked Profiles" list -> GET /api/blocks (matchesService.getBlocks);
+//       Unblock -> DELETE /api/blocks/:matId (matchesService.unblock).
+//   LOCAL-ONLY (not yet persisted — no backend): hideProfile, blurPhotos,
+//     incognito, emailNotifs, smsNotifs, marketing, twoFactor, loginAlerts.
+//     These toggles keep their state in-memory only; INITIAL_BLOCKED is the
+//     USE_MOCK_FALLBACK seed for the blocked list.
+import { Fragment, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SettingRow from '../../../components/ui/SettingRow.jsx';
 import { useToast } from '../../../context/ToastContext.jsx';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import AccountLayout from '../../../layouts/AccountLayout.jsx';
+import { getPrivacy, updatePrivacy } from '../../../services/accountService.js';
+import { getBlocks, unblock } from '../../../services/matchesService.js';
 import { INITIAL_BLOCKED, INITIAL_PRIVACY, SECTIONS } from './privacyData.js';
 
 export default function PrivacySecurity() {
@@ -17,21 +30,71 @@ export default function PrivacySecurity() {
   const [blocked, setBlocked] = useState(INITIAL_BLOCKED);
   const [confirmUnblockId, setConfirmUnblockId] = useState(null);
 
-  const setFlag = (key) => (value) => setPrivacy((p) => ({ ...p, [key]: value }));
+  // Seed the WIRED pieces from the backend on mount. The hideContact toggle
+  // reflects (hidePhone || hideEmail); the blocked list comes from /api/blocks.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { hidePhone, hideEmail } = await getPrivacy();
+      if (active) setPrivacy((p) => ({ ...p, hideContact: !!(hidePhone || hideEmail) }));
+    })();
+    (async () => {
+      const { results } = await getBlocks();
+      if (!active) return;
+      if (Array.isArray(results) && results.length) {
+        setBlocked(
+          results.map((card) => ({
+            id: card.matId,
+            matId: card.matId,
+            name: card.name,
+            image: card.image,
+            date: card.blockedAt,
+          })),
+        );
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Persist the single hideContact toggle to BOTH hide_phone + hide_email; the
+  // other keys are local-only (see the file header comment).
+  async function persistHideContact(value) {
+    const res = await updatePrivacy({ hidePhone: value, hideEmail: value });
+    if (res.ok) {
+      showToast('Settings Saved', 'Your contact visibility preference has been updated.', 'success', { duration: 3000 });
+    } else {
+      showToast('Save Failed', 'Could not update your contact visibility. Please try again.', 'error', { duration: 3000 });
+    }
+  }
+
+  const setFlag = (key) => (value) => {
+    setPrivacy((p) => ({ ...p, [key]: value }));
+    if (key === 'hideContact') persistHideContact(value);
+  };
 
   function unblockUser(id) {
     setConfirmUnblockId(id);
   }
 
-  function confirmUnblock() {
-    setBlocked((list) => list.filter((u) => u.id !== confirmUnblockId));
-    showToast('User Unblocked', 'The user has been successfully unblocked.', 'success', { duration: 3000 });
+  async function confirmUnblock() {
+    const target = blocked.find((u) => u.id === confirmUnblockId);
+    const id = confirmUnblockId;
     setConfirmUnblockId(null);
+    const res = target && target.matId ? await unblock(target.matId) : { ok: true };
+    if (res.ok) {
+      setBlocked((list) => list.filter((u) => u.id !== id));
+      showToast('User Unblocked', 'The user has been successfully unblocked.', 'success', { duration: 3000 });
+    } else {
+      showToast('Unblock Failed', 'Could not unblock this user. Please try again.', 'error', { duration: 3000 });
+    }
   }
 
   function saveSettings() {
-    // TODO: call the API here
-    showToast('Settings Saved', 'Your privacy and security preferences have been updated.', 'success', { duration: 3000 });
+    // Only the hideContact toggle is persisted (-> users.hide_phone/hide_email);
+    // the remaining toggles are local-only until a backend lands for them.
+    persistHideContact(privacy.hideContact);
   }
 
   return (

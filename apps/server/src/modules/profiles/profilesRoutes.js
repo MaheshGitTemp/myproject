@@ -3,7 +3,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../auth/session.js';
 import {
-  getMyProfile, updateMyProfile, createProfile,
+  getMyProfile, updateMyProfile, updateMyPrivacy, createProfile,
   getProfileByMat, getProfilesBase,
 } from './profilesController.js';
 
@@ -11,6 +11,9 @@ export const profilesRouter = Router();
 
 profilesRouter.get('/me', requireAuth, getMyProfile);
 profilesRouter.put('/me', requireAuth, updateMyProfile);
+// Contact-visibility flags (users.hide_phone/hide_email). Declared BEFORE the
+// `/:matId` route below so the param route never shadows it.
+profilesRouter.put('/me/privacy', requireAuth, updateMyPrivacy);
 profilesRouter.post('/', requireAuth, createProfile);
 
 // Single-profile lookup. `/me` and `/` are declared BEFORE `/:matId` so the

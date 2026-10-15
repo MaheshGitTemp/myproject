@@ -82,6 +82,19 @@ export async function getInterests(box = 'incoming') {
   }
 }
 
+/** GET /blocks -> { ok, results:[card] }. Each card carries matId/name/image/blockedAt. */
+export async function getBlocks() {
+  try {
+    const { httpOk, data } = await request('/blocks');
+    if (!httpOk) throw new Error('blocks request failed');
+    return { ok: true, results: data.results || [] };
+  } catch (e) {
+    console.error('getBlocks failed', e);
+    if (config.USE_MOCK_FALLBACK) return { ok: true, results: [] };
+    return { ok: false, results: [] };
+  }
+}
+
 // --- Writes ----------------------------------------------------------------
 
 /** POST /shortlist/:matId -> { ok, status }. */
