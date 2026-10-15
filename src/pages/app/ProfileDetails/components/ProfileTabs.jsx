@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Transition from '../../../../components/ui/Transition.jsx';
+import { useToast } from '../../../../context/ToastContext.jsx';
+import { unlockContact } from '../../../../services/contactService.js';
 import { ABOUT_ROWS, ASTRO_ROWS, FAMILY_ROWS, TABS } from '../profileDetailsData.js';
 
 // Same enter animation as the original tab panels (no leave: the old panel hides instantly)
@@ -23,9 +25,27 @@ function Rows({ profile, rows }) {
 }
 
 export default function ProfileTabs({ profile: p }) {
+  const { showToast } = useToast();
   const [tab, setTab] = useState('about');
   const [contactUnlocked, setContactUnlocked] = useState(false);
+  const [contact, setContact] = useState(null); // { phone, email, whatsapp } once unlocked
+  const [unlocking, setUnlocking] = useState(false);
   const first = (p.name || '').split(' ')[0];
+
+  async function handleUnlock() {
+    if (unlocking) return;
+    setUnlocking(true);
+    const res = await unlockContact(p.matId || p.id);
+    setUnlocking(false);
+    if (res.ok) {
+      setContact({ phone: res.phone, email: res.email, whatsapp: res.whatsapp });
+      setContactUnlocked(true);
+      return;
+    }
+    if (res.status === 429) showToast('Daily Limit Reached', `You can unlock up to ${res.limit ?? 'a limited number of'} contacts per day.`, 'error');
+    else if (res.status === 403) showToast('Unavailable', 'You cannot view this member\u2019s contact details.', 'error');
+    else showToast('Something went wrong', 'Could not unlock contact details. Please try again.', 'error');
+  }
   const c = p.compatibility;
   const panel = (key) => ({ show: tab === key, className: 'p-6', ...ENTER });
 
@@ -91,7 +111,7 @@ export default function ProfileTabs({ profile: p }) {
               <span className="line-through text-slate-400 dark:text-slate-500 mr-2">₹25</span>
               <span className="text-green-600 dark:text-green-400 font-bold">Free for You</span>
             </p>
-            <button type="button" onClick={() => setContactUnlocked(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand hover:bg-brand-dark text-white px-8 py-3 text-sm font-bold shadow-lg shadow-brand/30 transition transform hover:scale-105 min-h-[44px]">
+            <button type="button" onClick={handleUnlock} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand hover:bg-brand-dark text-white px-8 py-3 text-sm font-bold shadow-lg shadow-brand/30 transition transform hover:scale-105 min-h-[44px]">
               <i aria-hidden="true" className="fas fa-unlock" /> View Contact Details
             </button>
           </div>
@@ -101,11 +121,11 @@ export default function ProfileTabs({ profile: p }) {
             <div className="space-y-4 max-w-md">
               <div className="flex justify-between py-2.5 border-b border-slate-100 dark:border-slate-700">
                 <span className="text-slate-500 dark:text-slate-400 text-sm">Phone Number</span>
-                <span className="text-slate-800 dark:text-white font-semibold text-sm">+91 98765 43210</span>
+                <span className="text-slate-800 dark:text-white font-semibold text-sm">{contact?.phone}</span>
               </div>
               <div className="flex justify-between py-2.5 border-b border-slate-100 dark:border-slate-700">
                 <span className="text-slate-500 dark:text-slate-400 text-sm">Email</span>
-                <span className="text-slate-800 dark:text-white font-semibold text-sm">member@email.com</span>
+                <span className="text-slate-800 dark:text-white font-semibold text-sm">{contact?.email}</span>
               </div>
             </div>
           </div>

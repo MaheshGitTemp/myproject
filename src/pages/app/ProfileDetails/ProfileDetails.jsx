@@ -68,7 +68,7 @@ export default function ProfileDetails() {
         {state === 'ready' && (
           <div>
             <ProfileHeaderCard profile={profile} />
-            <ActionRow />
+            <ActionRow profile={profile} />
             <ProfileTabs key={profile.id} profile={profile} />
           </div>
         )}

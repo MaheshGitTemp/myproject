@@ -45,6 +45,9 @@ export default function Search() {
 
   const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
   const openProfile = (p) => { const id = idOf(p); if (id) navigate(profileUrl(id)); };
+  // The result-card primary action (Message) opens the chat; the cards expose no
+  // heart/bookmark buttons, so interest/shortlist are not wired here.
+  const messageProfile = () => navigate('/chat');
 
   // Reactive sort: reorders a copy of the current results whenever either changes.
   const sortedResults = useMemo(() => sortResults(results, sortBy), [results, sortBy]);
@@ -158,12 +161,12 @@ export default function Search() {
 
       {!loading && hasResults && view === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedResults.map((p, i) => <ResultGridCard key={p.id || p.uid || i} profile={p} index={i} onOpen={openProfile} />)}
+          {sortedResults.map((p, i) => <ResultGridCard key={p.id || p.uid || i} profile={p} index={i} onOpen={openProfile} onMessage={messageProfile} />)}
         </div>
       )}
       {!loading && hasResults && view === 'list' && (
         <div className="space-y-3">
-          {sortedResults.map((p, i) => <ResultListItem key={p.id || p.uid || i} profile={p} index={i} onOpen={openProfile} />)}
+          {sortedResults.map((p, i) => <ResultListItem key={p.id || p.uid || i} profile={p} index={i} onOpen={openProfile} onMessage={messageProfile} />)}
         </div>
       )}
 

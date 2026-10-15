@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Transition, { ALPINE_DEFAULT } from '../../../../components/ui/Transition.jsx';
+import { unlockContact } from '../../../../services/contactService.js';
 import ProfileGallery from './ProfileGallery.jsx';
 import ImageLightbox from './ImageLightbox.jsx';
 
@@ -24,10 +25,27 @@ function Fact({ icon, label, value }) {
   );
 }
 
-function Body({ profile: p, onClose, onRemove, onShortlist, onMessage }) {
+function Body({ profile: p, onClose, onRemove, onShortlist, onMessage, onToast }) {
   const [tab, setTab] = useState('about');
   const [lightboxIndex, setLightboxIndex] = useState(null); // null = closed, number = open at index
   const [contactUnlocked, setContactUnlocked] = useState(false);
+  const [contact, setContact] = useState(null); // { phone, email, whatsapp } once unlocked
+  const [unlocking, setUnlocking] = useState(false);
+
+  async function handleUnlock() {
+    if (unlocking) return;
+    setUnlocking(true);
+    const res = await unlockContact(p.matId || `MAT${p.uid}`);
+    setUnlocking(false);
+    if (res.ok) {
+      setContact({ phone: res.phone, email: res.email, whatsapp: res.whatsapp });
+      setContactUnlocked(true);
+      return;
+    }
+    if (res.status === 429) onToast?.('Daily Limit Reached', `You can unlock up to ${res.limit ?? 'a limited number of'} contacts per day.`, 'error');
+    else if (res.status === 403) onToast?.('Unavailable', 'You cannot view this member\u2019s contact details.', 'error');
+    else onToast?.('Something went wrong', 'Could not unlock contact details. Please try again.', 'error');
+  }
 
   return (
     // SINGLE native scroll container.
@@ -189,7 +207,7 @@ function Body({ profile: p, onClose, onRemove, onShortlist, onMessage }) {
                       <span className="line-through text-slate-400 dark:text-slate-500 mr-2">₹25</span>
                       <span className="text-green-600 dark:text-green-400 font-bold">Free for You</span>
                     </p>
-                    <button type="button" onClick={() => setContactUnlocked(true)} className="w-full py-3 bg-brand hover:bg-brand-dark text-white rounded-xl font-semibold shadow-lg shadow-brand/30 transition active:scale-[0.97] flex items-center justify-center gap-2"><i aria-hidden="true" className="fas fa-unlock" /> View Contact Details</button>
+                    <button type="button" onClick={handleUnlock} className="w-full py-3 bg-brand hover:bg-brand-dark text-white rounded-xl font-semibold shadow-lg shadow-brand/30 transition active:scale-[0.97] flex items-center justify-center gap-2"><i aria-hidden="true" className="fas fa-unlock" /> View Contact Details</button>
                   </div>
                 ) : (
                   <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
@@ -197,11 +215,11 @@ function Body({ profile: p, onClose, onRemove, onShortlist, onMessage }) {
                     <div className="space-y-4">
                       <div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Phone Number</div>
-                        <div className="font-semibold text-slate-800 dark:text-white">+91 98765 43210</div>
+                        <div className="font-semibold text-slate-800 dark:text-white">{contact?.phone}</div>
                       </div>
                       <div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Email</div>
-                        <div className="font-semibold text-slate-800 dark:text-white">member@email.com</div>
+                        <div className="font-semibold text-slate-800 dark:text-white">{contact?.email}</div>
                       </div>
                     </div>
                   </div>

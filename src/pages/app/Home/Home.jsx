@@ -5,6 +5,7 @@ import MainLayout from '../../../layouts/MainLayout.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import { useToast } from '../../../context/ToastContext.jsx';
 import { profileUrl } from '../../../services/profileLookupService.js';
+import { sendInterest } from '../../../services/matchesService.js';
 import { HOME_DRAWER_ITEMS } from './homeData.js';
 import { MATCHES_OF_DAY, RECOMMENDED } from './homeFeedData.js';
 import GreetingHeader from './components/GreetingHeader.jsx';
@@ -25,6 +26,7 @@ export default function Home() {
   const onView = (p) => navigate(profileUrl(p.id));
   const onInterest = (p) => {
     setInterested((m) => ({ ...m, [p.id]: true }));
+    sendInterest(p.matId || p.id); // optimistic: keep the toast even on non-ok
     showToast('Interest Sent', `Your interest has been sent to ${p.name}!`);
   };
 

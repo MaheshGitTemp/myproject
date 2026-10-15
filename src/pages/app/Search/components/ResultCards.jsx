@@ -5,7 +5,7 @@ const where = (p) => `${p.city || p.location || ''}, ${p.state || ''}`;
 // Cards are links in spirit: click or Enter opens the profile.
 const linkProps = (open) => ({ role: 'link', tabIndex: 0, onClick: open, onKeyDown: (e) => { if (e.key === 'Enter') open(); } });
 
-export function ResultGridCard({ profile: p, index, onOpen }) {
+export function ResultGridCard({ profile: p, index, onOpen, onMessage }) {
   const open = () => onOpen(p);
   return (
     <div className="glass rounded-3xl overflow-hidden card-shadow card-hover relative group cursor-pointer" {...linkProps(open)} style={{ animation: `slideUp 0.5s ease-out ${index * 0.08}s both` }}>
@@ -31,14 +31,14 @@ export function ResultGridCard({ profile: p, index, onOpen }) {
         </div>
         <div className="flex gap-2">
           <button type="button" onClick={(e) => { e.stopPropagation(); open(); }} className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-brand/10 hover:text-brand rounded-xl font-semibold text-sm transition quick-action"><i aria-hidden="true" className="far fa-user" /> View</button>
-          <button type="button" onClick={(e) => e.stopPropagation()} className="flex-[2] py-2.5 bg-brand hover:bg-brand-dark text-white rounded-xl font-semibold text-sm shadow-lg shadow-brand/30 transition quick-action"><i aria-hidden="true" className="far fa-comment-dots" /> Message</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onMessage?.(p); }} className="flex-[2] py-2.5 bg-brand hover:bg-brand-dark text-white rounded-xl font-semibold text-sm shadow-lg shadow-brand/30 transition quick-action"><i aria-hidden="true" className="far fa-comment-dots" /> Message</button>
         </div>
       </div>
     </div>
   );
 }
 
-export function ResultListItem({ profile: p, index, onOpen }) {
+export function ResultListItem({ profile: p, index, onOpen, onMessage }) {
   const open = () => onOpen(p);
   return (
     <div className="list-card glass rounded-2xl overflow-hidden card-shadow flex flex-col md:flex-row items-stretch cursor-pointer" {...linkProps(open)} style={{ animation: `slideUp 0.4s ease-out ${index * 0.05}s both` }}>
@@ -54,7 +54,7 @@ export function ResultListItem({ profile: p, index, onOpen }) {
         </div>
         <div className="flex gap-2 mt-3">
           <button type="button" onClick={(e) => { e.stopPropagation(); open(); }} className="flex-1 md:flex-none px-6 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-brand/10 hover:text-brand rounded-xl font-semibold text-sm transition quick-action"><i aria-hidden="true" className="far fa-user mr-1" /> View Profile</button>
-          <button type="button" onClick={(e) => e.stopPropagation()} className="flex-1 md:flex-none px-6 py-2 bg-brand hover:bg-brand-dark text-white rounded-xl font-semibold text-sm shadow-lg shadow-brand/30 transition quick-action"><i aria-hidden="true" className="far fa-comment-dots mr-1" /> Message</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onMessage?.(p); }} className="flex-1 md:flex-none px-6 py-2 bg-brand hover:bg-brand-dark text-white rounded-xl font-semibold text-sm shadow-lg shadow-brand/30 transition quick-action"><i aria-hidden="true" className="far fa-comment-dots mr-1" /> Message</button>
         </div>
       </div>
     </div>

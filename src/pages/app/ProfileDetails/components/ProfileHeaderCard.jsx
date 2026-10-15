@@ -1,3 +1,6 @@
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../../../context/ToastContext.jsx';
+import { report, sendInterest, shortlist } from '../../../../services/matchesService.js';
 import { ACTIONS } from '../profileDetailsData.js';
 
 const locationLine = (p) => [p.city, p.state].filter(Boolean).join(', ');
@@ -39,17 +42,39 @@ export function ProfileHeaderCard({ profile: p }) {
   );
 }
 
-// The four buttons are static in the original (no handlers yet).
-export function ActionRow() {
+// The four action buttons: Send Interest, Shortlist, Message (nav to chat) and
+// Report. All WRITE endpoints are keyed by the MAT id string (p.matId||p.id).
+export function ActionRow({ profile: p }) {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const matId = p?.matId || p?.id;
+
+  const onAction = (label) => {
+    if (label === 'Send Interest') {
+      sendInterest(matId);
+      showToast('Interest Sent', `Your interest has been sent to ${p.name || p.fullName || 'this member'}!`);
+    } else if (label === 'Shortlist') {
+      shortlist(matId);
+      showToast('Shortlisted', `${p.name || p.fullName || 'This member'} added to your shortlist!`);
+    } else if (label === 'Message') {
+      navigate('/chat');
+    }
+  };
+
+  const onReport = () => {
+    report(matId, 'reported_from_profile');
+    showToast('Reported', 'Thank you. Our team will review this profile.');
+  };
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
       {ACTIONS.map((a) => (
-        <button key={a.label} type="button" className="glass rounded-xl p-3 card-shadow hover:shadow-lg transition flex flex-col items-center text-center gap-2 group">
+        <button key={a.label} type="button" onClick={() => onAction(a.label)} className="glass rounded-xl p-3 card-shadow hover:shadow-lg transition flex flex-col items-center text-center gap-2 group">
           <div className={`w-10 h-10 rounded-full ${a.tone} flex items-center justify-center group-hover:scale-110 transition`}><i aria-hidden="true" className={`fas ${a.icon}`} /></div>
           <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{a.label}</span>
         </button>
       ))}
-      <button type="button" className="glass rounded-xl p-3 card-shadow hover:shadow-lg transition flex flex-col items-center text-center gap-2 group hover:bg-red-50 dark:hover:bg-red-900/20">
+      <button type="button" onClick={onReport} className="glass rounded-xl p-3 card-shadow hover:shadow-lg transition flex flex-col items-center text-center gap-2 group hover:bg-red-50 dark:hover:bg-red-900/20">
         <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center group-hover:scale-110 transition"><i aria-hidden="true" className="fas fa-flag" /></div>
         <span className="text-xs font-bold text-red-600">Report</span>
       </button>

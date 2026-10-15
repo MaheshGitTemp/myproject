@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ToastStack from '../../../components/ui/ToastStack.jsx';
 import useToastStack from '../../../hooks/useToastStack.js';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import MainLayout from '../../../layouts/MainLayout.jsx';
+import * as matchesService from '../../../services/matchesService.js';
 import MatchCard from './components/MatchCard.jsx';
 import MatchListItem from './components/MatchListItem.jsx';
 import ProfileModal from './components/ProfileModal.jsx';
-import { applyFilters, FILTERS, MATCHES_DRAWER_ITEMS, MUTUALS, SHORTLISTED } from './matchesData.js';
+import { applyFilters, FILTERS, MATCHES_DRAWER_ITEMS } from './matchesData.js';
 
 const EMPTY_TEXT = {
   shortlisted: 'Start swiping on the Home page to save profiles you like!',
@@ -25,9 +26,22 @@ export default function Matches() {
   const [view, setView] = useState('grid');
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(['all']);
-  const [shortlisted, setShortlisted] = useState(SHORTLISTED);
-  const [mutuals, setMutuals] = useState(MUTUALS);
+  const [shortlisted, setShortlisted] = useState([]);
+  const [mutuals, setMutuals] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const res = await matchesService.getMatches();
+      if (!alive) return;
+      setShortlisted(res.shortlisted || []);
+      setMutuals(res.mutual || []);
+      setLoading(false);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const isMutual = tab === 'mutual';
   const all = isMutual ? mutuals : shortlisted;
@@ -42,12 +56,25 @@ export default function Matches() {
     });
   }
   function removeProfile(uid) {
-    if (isMutual) setMutuals((l) => l.filter((p) => p.uid !== uid));
-    else setShortlisted((l) => l.filter((p) => p.uid !== uid));
+    if (isMutual) {
+      // No unmatch endpoint — drop locally only.
+      setMutuals((l) => l.filter((p) => p.uid !== uid));
+    } else {
+      const row = shortlisted.find((p) => p.uid === uid);
+      const matId = row?.matId || row?.id;
+      if (matId) matchesService.unshortlist(matId);
+      setShortlisted((l) => l.filter((p) => p.uid !== uid));
+    }
     showToast('Removed', 'Profile removed from your matches.');
   }
-  const message = (p) => showToast('Message Sent', `Your interest has been sent to ${p.name}!`);
-  const shortlist = (p) => showToast('Shortlisted', `${p.name} added to your shortlist!`);
+  const message = (p) => {
+    matchesService.sendInterest(p.matId || p.id);
+    showToast('Message Sent', `Your interest has been sent to ${p.name}!`);
+  };
+  const shortlist = (p) => {
+    matchesService.shortlist(p.matId || p.id);
+    showToast('Shortlisted', `${p.name} added to your shortlist!`);
+  };
 
   const cardProps = { mutual: isMutual, onOpen: setSelected, onRemove: removeProfile, onMessage: message };
 
@@ -65,6 +92,7 @@ export default function Matches() {
             onRemove={(uid) => { removeProfile(uid); setSelected(null); }}
             onShortlist={(p) => { shortlist(p); setSelected(null); }}
             onMessage={(p) => { message(p); setSelected(null); }}
+            onToast={showToast}
           />
           <ToastStack toasts={toasts} onClose={removeToast} />
         </>
@@ -123,7 +151,19 @@ export default function Matches() {
       </div>
 
       <div className="view-transition">
-        {visible.length === 0 && (
+        {loading && (
+          <div className="text-center py-16 px-6 glass rounded-3xl max-w-lg mx-auto card-shadow animate-bounce-in">
+            <div className="relative inline-block mb-6">
+              <div className="w-32 h-32 bg-gradient-to-br from-brand-soft to-rose-100 dark:from-brand/20 dark:to-brand/10 rounded-full flex items-center justify-center mx-auto animate-float">
+                <i aria-hidden="true" className="fas fa-spinner fa-spin text-5xl text-brand" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-heading font-bold mb-2">Loading your matches…</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto">Fetching your shortlisted profiles and mutual connections.</p>
+          </div>
+        )}
+
+        {!loading && visible.length === 0 && (
           <div className="text-center py-16 px-6 glass rounded-3xl max-w-lg mx-auto card-shadow animate-bounce-in">
             <div className="relative inline-block mb-6">
               <div className="w-32 h-32 bg-gradient-to-br from-brand-soft to-rose-100 dark:from-brand/20 dark:to-brand/10 rounded-full flex items-center justify-center mx-auto animate-float">
