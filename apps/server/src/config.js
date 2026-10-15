@@ -11,13 +11,25 @@ const int = (v, fallback) => {
 };
 const list = (v) => (v ? String(v).split(',').map((s) => s.trim()).filter(Boolean) : []);
 
+// Local dev frontends run on 5173 (member) and 5174 (admin). Allow BOTH the
+// localhost and 127.0.0.1 host variants of each, since the browser treats them
+// as different origins and the dev page may be served from either. Any origins
+// from CORS_ORIGINS (e.g. the production domain) are merged on top.
+const DEV_ORIGINS = [
+  'http://localhost:5173', 'http://127.0.0.1:5173',
+  'http://localhost:5174', 'http://127.0.0.1:5174',
+];
+const isProdEnv = (process.env.NODE_ENV || 'development') === 'production';
+
 export const config = {
   env: process.env.NODE_ENV || 'development',
-  isProd: (process.env.NODE_ENV || 'development') === 'production',
+  isProd: isProdEnv,
   port: int(process.env.PORT, 4000),
-  corsOrigins: list(process.env.CORS_ORIGINS).length
+  // In production, use exactly what CORS_ORIGINS specifies. In dev, always allow
+  // the local dev origins (both host variants) plus anything in CORS_ORIGINS.
+  corsOrigins: isProdEnv
     ? list(process.env.CORS_ORIGINS)
-    : ['http://localhost:5173', 'http://localhost:5174'],
+    : [...new Set([...DEV_ORIGINS, ...list(process.env.CORS_ORIGINS)])],
 
   db: {
     // A single DATABASE_URL wins if provided; otherwise assemble from PG* parts.
