@@ -1,6 +1,6 @@
 // Profiles request handlers. Thin: validate, call repo, shape the response.
 // Endpoints are mounted at /api/profiles (see profilesRoutes.js + app.js).
-import { withTransaction } from '../../db.js';
+import { query, withTransaction } from '../../db.js';
 import {
   getProfileByUserId, getPreferencesByUserId, getProfileByMatId,
   upsertProfile, upsertPreferences,
@@ -136,6 +136,20 @@ async function resolvePublicProfile(rawId, viewer) {
   // viewers are never unlocked. Server-side decision — gateContact().
   const unlocked = viewer ? await isUnlocked(viewer.id, row.user_id) : false;
   const contact = gateContact({ target: row, viewer, unlocked, blocked });
+
+  // Best-effort profile-view record: a logged-in non-owner viewed a visible
+  // profile. Swallow any insert error so the profile fetch never breaks.
+  if (viewer && viewer.id !== row.user_id) {
+    try {
+      await query(
+        'INSERT INTO profile_views (viewer_id, viewed_id) VALUES ($1, $2)',
+        [viewer.id, row.user_id],
+      );
+    } catch {
+      // ignore — recording a view must never fail the profile read
+    }
+  }
+
   return rowToDetail(row, { contact });
 }
 

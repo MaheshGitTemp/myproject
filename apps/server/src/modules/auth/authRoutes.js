@@ -3,7 +3,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import {
   register, verifyEmailOtp, resendOtp, login, logout, me,
-  forgotPassword, resetPassword,
+  forgotPassword, resetPassword, changePassword,
 } from './authController.js';
 import { requireAuth } from './session.js';
 
@@ -42,3 +42,4 @@ authRouter.post('/logout', logout);
 authRouter.get('/me', requireAuth, me);
 authRouter.post('/forgot-password', otpLimiter, forgotPassword);
 authRouter.post('/reset-password', otpLimiter, resetPassword);
+authRouter.post('/change-password', requireAuth, changePassword);

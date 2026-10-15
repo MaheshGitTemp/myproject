@@ -250,6 +250,37 @@ export async function me(req, res) {
   res.json({ user: publicUser(req.user) });
 }
 
+/**
+ * POST /api/auth/change-password  (requireAuth)
+ * Body: { currentPassword, newPassword }
+ * Verifies the current password, validates the new one, updates the hash, then
+ * invalidates every OTHER session (keeps req.sessionId so the caller stays in).
+ */
+export async function changePassword(req, res, next) {
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+
+    const row = await queryOne('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!row || !(await verifyPassword(currentPassword, row.password_hash))) {
+      return res.status(400).json({ error: 'wrong_password' });
+    }
+
+    const pwIssue = passwordIssue(newPassword);
+    if (pwIssue) return res.status(400).json({ error: 'weak_password', message: pwIssue });
+
+    const passwordHash = await hashPassword(newPassword);
+    await query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2',
+      [passwordHash, req.user.id]);
+    // Keep the current session; log out everywhere else.
+    await query('DELETE FROM sessions WHERE user_id = $1 AND id <> $2',
+      [req.user.id, req.sessionId]);
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /** POST /api/auth/forgot-password  Body: { email } -> sends reset OTP */
 export async function forgotPassword(req, res, next) {
   try {

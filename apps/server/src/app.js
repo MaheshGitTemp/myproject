@@ -20,6 +20,8 @@ import { contactRouter } from './modules/contact/contactRoutes.js';
 import { photosRouter } from './modules/photos/photosRoutes.js';
 import { chatRouter } from './modules/chat/chatRoutes.js';
 import { accountRouter } from './modules/account/accountRoutes.js';
+import { getStats, getDashboard } from './modules/account/statsController.js';
+import { requireAuth } from './modules/auth/session.js';
 import { adminRouter } from './modules/admin/adminRoutes.js';
 
 export function createApp() {
@@ -111,6 +113,10 @@ export function createApp() {
 
   // Account self-service (P7): close (permanently delete) your own account.
   app.use('/api/account', accountRouter);
+
+  // Member stats + dashboard (read-only aggregates behind auth).
+  app.get('/api/me/stats', requireAuth, getStats);
+  app.get('/api/dashboard', requireAuth, getDashboard);
 
   // Admin (schema-ready, no UI yet): guarded moderation/settings stubs that
   // each write an admin_audit row. requireAdmin enforced inside the router.

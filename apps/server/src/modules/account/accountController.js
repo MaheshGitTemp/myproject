@@ -2,6 +2,7 @@
 // Thin controller — the heavy lifting (disk cleanup + cascade delete) lives in
 // accountRepo.deleteUserFully, which admin delete reuses (see
 // src/modules/admin). Business rule 8 (user message 3).
+import { query } from '../../db.js';
 import { deleteUserFully } from './accountRepo.js';
 import { destroySession } from '../auth/session.js';
 
@@ -20,6 +21,23 @@ export async function closeAccount(req, res, next) {
     // Clear the session cookie + any lingering session row for this cookie.
     await destroySession(req, res);
     res.json({ ok: true, deleted: result.deleted > 0 });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/account/deactivate  (requireAuth)
+ * Soft-disable: set the user's status to 'suspended'. Reversible (unlike
+ * closeAccount, which permanently deletes). Login already blocks suspended
+ * accounts with error 'account_suspended', so no further session handling is
+ * needed here (acceptable v1).
+ */
+export async function deactivateAccount(req, res, next) {
+  try {
+    await query("UPDATE users SET status = 'suspended', updated_at = now() WHERE id = $1",
+      [req.user.id]);
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }
