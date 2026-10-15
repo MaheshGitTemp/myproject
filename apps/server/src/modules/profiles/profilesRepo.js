@@ -224,7 +224,7 @@ export async function searchProfiles({ filters = {}, page = 1, limit = 20, viewe
 
   const has = (v) => v !== undefined && v !== null && String(v).trim() !== '';
 
-  if (has(filters.gender)) where.push(`p.gender = ${add(filters.gender)}`);
+  if (has(filters.gender)) where.push(`LOWER(p.gender) = LOWER(${add(filters.gender)})`);
 
   // age range -> compare the computed age from dob (parameterized bounds).
   if (has(filters.ageFrom)) {
