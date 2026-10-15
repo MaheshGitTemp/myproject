@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import MainLayout from '../../../layouts/MainLayout.jsx';
-import { CHAT_DRAWER_ITEMS, CONVERSATIONS } from './chatData.js';
+import { useToast } from '../../../context/ToastContext.jsx';
+import * as chatService from '../../../services/chatService.js';
+import { CHAT_DRAWER_ITEMS } from './chatData.js';
 import ChatWindow from './components/ChatWindow.jsx';
 import ConversationList from './components/ConversationList.jsx';
+
+// A conversation always carries a messages[] array so ChatWindow can read it
+// safely; the list endpoint omits messages, so default to [] until opened.
+const withMessages = (c) => ({ ...c, messages: Array.isArray(c.messages) ? c.messages : [] });
 
 export default function Chat() {
   usePageMeta({
@@ -11,10 +17,30 @@ export default function Chat() {
     description: 'Chat with your matches on Telugu Sambandham.',
     robots: 'noindex, nofollow',
   });
-  const [conversations, setConversations] = useState(CONVERSATIONS);
+  const { showToast } = useToast();
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [query, setQuery] = useState('');
   const [draft, setDraft] = useState('');
+
+  // Load conversations on mount and poll every ~7s (no websockets). Fetched
+  // messages already loaded onto a conversation are preserved across refetches.
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      const { conversations: list } = await chatService.getConversations();
+      if (!alive) return;
+      setConversations((prev) => list.map((c) => {
+        const existing = prev.find((p) => p.id === c.id);
+        return existing && existing.messages.length ? { ...withMessages(c), messages: existing.messages } : withMessages(c);
+      }));
+      setLoading(false);
+    }
+    load();
+    const timer = setInterval(load, 7000);
+    return () => { alive = false; clearInterval(timer); };
+  }, []);
 
   // Sync chat area height with visual viewport (iOS keyboard shrinks it).
   // Lives here so --chat-vh is set whenever the Chat page is mounted (list view or open conversation).
@@ -45,21 +71,33 @@ export default function Chat() {
   const visible = q ? conversations.filter((c) => c.name.toLowerCase().includes(q)) : conversations;
   const active = conversations.find((c) => c.id === selectedId) || null;
 
-  function select(id) {
+  async function select(id) {
     setSelectedId(id);
-    // opening a chat marks it read
+    // opening a chat marks it read locally and clears the unread badge
     setConversations((list) => list.map((c) => (c.id === id
       ? { ...c, unread: 0, messages: c.messages.map((m) => (m.isSent ? m : { ...m, read: true })) }
       : c)));
+    // fetch the conversation's messages from the backend and store them on it
+    const { messages } = await chatService.getMessages(id);
+    setConversations((list) => list.map((c) => (c.id === id ? { ...c, messages } : c)));
+    chatService.markRead(id);
   }
 
-  function send(text) {
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    // TODO: send through the chat API
+  async function send(text) {
+    if (!active) return;
+    const { ok, status, reason, message } = await chatService.sendMessage(active.otherMatId, text);
+    if (!ok) {
+      if (status === 403 || reason === 'messaging_blocked') {
+        showToast('Message not sent', 'Messaging is blocked for this conversation.', 'error');
+      }
+      return;
+    }
+    const time = (message && message.time) || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const sent = message || { id: Date.now(), text, isSent: true, time, read: false };
     setConversations((list) => {
       const chat = list.find((c) => c.id === selectedId);
       if (!chat) return list;
-      const updated = { ...chat, lastMessage: text, lastMessageTime: time, messages: [...chat.messages, { id: Date.now(), text, isSent: true, time, read: false }] };
+      const updated = { ...chat, lastMessage: sent.text, lastMessageTime: time, messages: [...chat.messages, sent] };
       return [updated, ...list.filter((c) => c.id !== selectedId)]; // newest conversation first
     });
     setDraft('');
