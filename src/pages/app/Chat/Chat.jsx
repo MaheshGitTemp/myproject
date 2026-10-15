@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import MainLayout from '../../../layouts/MainLayout.jsx';
 import { useToast } from '../../../context/ToastContext.jsx';
@@ -11,6 +12,10 @@ import ConversationList from './components/ConversationList.jsx';
 // safely; the list endpoint omits messages, so default to [] until opened.
 const withMessages = (c) => ({ ...c, messages: Array.isArray(c.messages) ? c.messages : [] });
 
+// Sentinel id for a locally-synthesized conversation that has no server row yet
+// (opened via /chat?with=MATxxxx before the first message is sent).
+const DRAFT_ID = 'new';
+
 export default function Chat() {
   usePageMeta({
     title: 'Messages | Telugu Sambandham',
@@ -18,6 +23,8 @@ export default function Chat() {
     robots: 'noindex, nofollow',
   });
   const { showToast } = useToast();
+  const [searchParams] = useSearchParams();
+  const withMatId = searchParams.get('with'); // a MAT id to open/start a thread with
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
@@ -31,16 +38,50 @@ export default function Chat() {
     async function load() {
       const { conversations: list } = await chatService.getConversations();
       if (!alive) return;
-      setConversations((prev) => list.map((c) => {
-        const existing = prev.find((p) => p.id === c.id);
-        return existing && existing.messages.length ? { ...withMessages(c), messages: existing.messages } : withMessages(c);
-      }));
+      setConversations((prev) => {
+        const mapped = list.map((c) => {
+          const existing = prev.find((p) => p.id === c.id);
+          return existing && existing.messages.length ? { ...withMessages(c), messages: existing.messages } : withMessages(c);
+        });
+        // Keep any local draft conversation (id 'new') that the server does not
+        // know about yet so an in-progress ?with= thread survives polling.
+        const draftConv = prev.find((p) => p.id === DRAFT_ID && !mapped.some((m) => m.otherMatId === p.otherMatId));
+        return draftConv ? [draftConv, ...mapped] : mapped;
+      });
       setLoading(false);
     }
     load();
     const timer = setInterval(load, 7000);
     return () => { alive = false; clearInterval(timer); };
   }, []);
+
+  // Honor /chat?with=MATxxxx: once conversations have loaded, open the existing
+  // thread for that member, or synthesize a local draft so ChatWindow opens an
+  // empty thread the user can type into. Runs once per `with` value (guarded by
+  // handledWith) so polling refetches don't re-trigger selection.
+  const [handledWith, setHandledWith] = useState(null);
+  useEffect(() => {
+    if (loading || !withMatId || handledWith === withMatId) return;
+    const existing = conversations.find((c) => c.otherMatId === withMatId);
+    if (existing) {
+      setHandledWith(withMatId);
+      select(existing.id);
+      return;
+    }
+    const draftConv = {
+      id: DRAFT_ID,
+      otherMatId: withMatId,
+      name: withMatId,
+      avatar: null,
+      online: false,
+      unread: 0,
+      messages: [],
+    };
+    setConversations((list) => [draftConv, ...list.filter((c) => c.id !== DRAFT_ID)]);
+    setSelectedId(DRAFT_ID);
+    setHandledWith(withMatId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, withMatId, conversations, handledWith]);
 
   // Sync chat area height with visual viewport (iOS keyboard shrinks it).
   // Lives here so --chat-vh is set whenever the Chat page is mounted (list view or open conversation).
@@ -73,6 +114,8 @@ export default function Chat() {
 
   async function select(id) {
     setSelectedId(id);
+    // A local draft has no server row yet: just open it, no markRead/getMessages.
+    if (id === DRAFT_ID) return;
     // opening a chat marks it read locally and clears the unread badge
     setConversations((list) => list.map((c) => (c.id === id
       ? { ...c, unread: 0, messages: c.messages.map((m) => (m.isSent ? m : { ...m, read: true })) }
@@ -85,7 +128,8 @@ export default function Chat() {
 
   async function send(text) {
     if (!active) return;
-    const { ok, status, reason, message } = await chatService.sendMessage(active.otherMatId, text);
+    const sentFromId = selectedId;
+    const { ok, status, reason, conversationId, message } = await chatService.sendMessage(active.otherMatId, text);
     if (!ok) {
       if (status === 403 || reason === 'messaging_blocked') {
         showToast('Message not sent', 'Messaging is blocked for this conversation.', 'error');
@@ -94,12 +138,21 @@ export default function Chat() {
     }
     const time = (message && message.time) || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const sent = message || { id: Date.now(), text, isSent: true, time, read: false };
+    // A draft gets promoted to its real conversation id so a reload finds it.
+    const isDraft = sentFromId === DRAFT_ID && conversationId != null;
+    const nextId = isDraft ? conversationId : sentFromId;
     setConversations((list) => {
-      const chat = list.find((c) => c.id === selectedId);
+      const chat = list.find((c) => c.id === sentFromId);
       if (!chat) return list;
-      const updated = { ...chat, lastMessage: sent.text, lastMessageTime: time, messages: [...chat.messages, sent] };
-      return [updated, ...list.filter((c) => c.id !== selectedId)]; // newest conversation first
+      const updated = { ...chat, id: nextId, lastMessage: sent.text, lastMessageTime: time, messages: [...chat.messages, sent] };
+      return [updated, ...list.filter((c) => c.id !== sentFromId)]; // newest conversation first
     });
+    if (isDraft) {
+      setSelectedId(nextId);
+      // Hydrate the now-persisted thread from the server under its real id.
+      const { messages } = await chatService.getMessages(conversationId);
+      if (messages.length) setConversations((list) => list.map((c) => (c.id === nextId ? { ...c, messages } : c)));
+    }
     setDraft('');
   }
 

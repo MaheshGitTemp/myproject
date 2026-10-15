@@ -57,7 +57,7 @@ export function ActionRow({ profile: p }) {
       shortlist(matId);
       showToast('Shortlisted', `${p.name || p.fullName || 'This member'} added to your shortlist!`);
     } else if (label === 'Message') {
-      navigate('/chat');
+      navigate('/chat?with=' + encodeURIComponent(matId));
     }
   };
 
