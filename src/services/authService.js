@@ -123,9 +123,12 @@ export async function resendOtp(form) {
   }
 }
 
-// --- Finish registration: the user + profile already exist (created by
-//     /auth/register after OTP verification), so establish the session by
-//     logging in with the step-1 credentials and return the user. -----------
+// --- Finish registration: the account + a (partial) profile were created by
+//     /auth/register at step 1, but the later wizard steps (gender, dob,
+//     education, community, preferences, ...) are only in `form` now. So:
+//     1) log in to establish the session, 2) PUT the FULL form to
+//     /api/profiles/me so the complete profile + preferences are saved,
+//     3) return the user. -----------------------------------------------------
 export async function registerProfile(form) {
   try {
     const { httpOk, data } = await postAuth('login', {
@@ -133,6 +136,45 @@ export async function registerProfile(form) {
       password: form.password,
     });
     if (!httpOk) return { ok: false, error: data.error, message: data.message };
+
+    // Persist the complete wizard form to the profile (session cookie is now set).
+    // The wizard names a few OWN-attribute fields differently from what
+    // PUT /api/profiles/me expects (which uses the EditProfile key names), so
+    // translate those here. Preference fields map to pref* keys. Fields with
+    // matching names (gender, dob, city, state, subCaste, gothram, rasi,
+    // nakshatra, padam, firstName, lastName) pass straight through.
+    const profilePayload = {
+      ...form,
+      // own attributes: wizard profile* / salary / aboutMe -> EditProfile names
+      height: form.profileHeight,
+      maritalStatus: form.profileMaritalStatus,
+      education: form.profileEducation,
+      occupation: form.profileOccupation,
+      income: form.salary,
+      about: form.aboutMe,
+      // partner preferences: wizard names -> pref* names
+      prefMaritalStatus: form.maritalStatus,
+      prefEducation: form.education,
+      prefOccupation: form.occupation,
+      prefHeightFrom: form.height,
+      prefLocation: form.preferredLocation,
+      lookingFor: form.lookingFor,
+      ageFrom: form.ageFrom,
+      ageTo: form.ageTo,
+    };
+    try {
+      await fetch(`${config.API_BASE}/profiles/me`, {
+        method: 'PUT',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(profilePayload),
+      });
+    } catch (e) {
+      // Non-fatal: the account exists and is logged in; the profile can be
+      // completed later from Edit Profile. Log and continue.
+      console.warn('profile save after registration failed (continuing):', e);
+    }
+
     const user = (await fetchMe()) || data.user;
     return { ok: true, user };
   } catch (e) {
