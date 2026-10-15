@@ -1,10 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '../../../context/ToastContext.jsx';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import AccountLayout from '../../../layouts/AccountLayout.jsx';
+import * as matchesService from '../../../services/matchesService.js';
 import '../../../styles/pages/notifications.css';
-import { NOTIFICATION_PILLS, RECEIVED, SENT } from './notificationsData.js';
+import { NOTIFICATION_PILLS } from './notificationsData.js';
 import ProposalRow from './ProposalRow.jsx';
+
+// Map an interests-feed card to the ProposalRow shape. The feed carries the
+// full MAT id string in card.matId; the row DISPLAYS/links on the numeric part
+// (it renders `MAT{p.matId}`) while API calls need the full MAT string, kept as
+// apiMatId. interestStatus 'declined' surfaces as the UI 'rejected' pill.
+function toProposal(card) {
+  const full = card.matId || card.id || '';
+  const numeric = String(full).replace(/^MAT/i, '');
+  return {
+    id: card.uid ?? card.id ?? full,
+    name: card.fullName || card.name,
+    age: card.age,
+    location: card.city || card.location,
+    matId: numeric,
+    apiMatId: full,
+    status: card.interestStatus === 'declined' ? 'rejected' : card.interestStatus,
+    image: card.image,
+  };
+}
 
 const TAB = 'flex-1 py-4 px-6 text-sm font-semibold transition-colors relative tab-btn flex items-center justify-center gap-2';
 
@@ -25,16 +45,37 @@ export default function Notifications() {
   });
   const { showToast } = useToast();
   const [tab, setTab] = useState('received');
-  const [received, setReceived] = useState(RECEIVED);
-  const sent = SENT;
+  const [received, setReceived] = useState([]);
+  const [sent, setSent] = useState([]);
+  const [loading, setLoading] = useState(true);
   const pending = received.filter((p) => p.status === 'pending').length;
 
+  // Received = incoming interests, Sent = outgoing interests (via matchesService).
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const [incoming, outgoing] = await Promise.all([
+        matchesService.getInterests('incoming'),
+        matchesService.getInterests('outgoing'),
+      ]);
+      if (!active) return;
+      setReceived((incoming.results || []).map(toProposal));
+      setSent((outgoing.results || []).map(toProposal));
+      setLoading(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const setStatus = (id, status) => setReceived((list) => list.map((p) => (p.id === id ? { ...p, status } : p)));
-  function accept(p) {
+  async function accept(p) {
+    await matchesService.acceptInterest(p.apiMatId);
     setStatus(p.id, 'accepted');
     showToast('Proposal Accepted!', `You and ${p.name} are now a match! 🎉`, 'success');
   }
-  function reject(p) {
+  async function reject(p) {
+    await matchesService.declineInterest(p.apiMatId);
     setStatus(p.id, 'rejected');
     showToast('Proposal Rejected', `You have declined ${p.name}'s proposal.`, 'info');
   }
@@ -65,12 +106,14 @@ export default function Notifications() {
         <div className="p-4 sm:p-6 min-h-[400px]">
           {tab === 'received' ? (
             <div className="space-y-4 pt-4">
-              {received.length === 0 && <Empty icon="far fa-bell" text="No proposals received yet." />}
+              {loading && <Empty icon="far fa-bell" text="Loading proposals…" />}
+              {!loading && received.length === 0 && <Empty icon="far fa-bell" text="No proposals received yet." />}
               {received.map((p) => <ProposalRow key={p.id} proposal={p} onAccept={accept} onReject={reject} />)}
             </div>
           ) : (
             <div className="space-y-4 pt-4">
-              {sent.length === 0 && <Empty icon="far fa-paper-plane" text="You haven't sent any proposals yet." />}
+              {loading && <Empty icon="far fa-paper-plane" text="Loading proposals…" />}
+              {!loading && sent.length === 0 && <Empty icon="far fa-paper-plane" text="You haven't sent any proposals yet." />}
               {sent.map((p) => <ProposalRow key={p.id} proposal={p} />)}
             </div>
           )}
