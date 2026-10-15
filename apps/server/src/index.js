@@ -5,8 +5,13 @@ import { pingDb, closeDb } from './db.js';
 
 const app = createApp();
 
-const server = app.listen(config.port, async () => {
-  console.log(`[server] listening on http://localhost:${config.port} (${config.env})`);
+// Bind explicitly to IPv4 0.0.0.0 (not the default, which can resolve to the
+// IPv6 wildcard "::" on Windows). Binding to 0.0.0.0 accepts 127.0.0.1 and
+// localhost-over-IPv4 cleanly and avoids the IPv4/IPv6 ambiguity that caused
+// POST connection resets in local dev.
+const HOST = '0.0.0.0';
+const server = app.listen(config.port, HOST, async () => {
+  console.log(`[server] listening on http://127.0.0.1:${config.port} (${config.env})`);
   try {
     const ok = await pingDb();
     console.log(ok ? '[server] database connection OK' : '[server] database ping returned no row');
