@@ -5,6 +5,8 @@ import Transition from '../../../components/ui/Transition.jsx';
 import useCooldown from '../../../hooks/useCooldown.js';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import * as authService from '../../../services/authService.js';
+import * as photosService from '../../../services/photosService.js';
+import { useToast } from '../../../context/ToastContext.jsx';
 import '../../../styles/pages/register.css';
 import ProgressIndicator from './ProgressIndicator.jsx';
 import Step1Basic from './steps/Step1Basic.jsx';
@@ -27,6 +29,8 @@ const INITIAL_FORM = {
   subCaste: '', rasi: '', nakshatra: '', padam: '',
   lookingFor: 'bride', ageFrom: '21', ageTo: '28',
   height: 'Any Height', maritalStatus: 'Any', education: 'Any Education', occupation: 'Any Occupation',
+  // Selected File[] from Step 6; uploaded AFTER the session is established.
+  photos: [],
 };
 
 // Same enter animation Alpine used on every step.
@@ -47,6 +51,7 @@ export default function Register() {
 
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
@@ -112,7 +117,22 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
     const result = await authService.registerProfile(form);
+    // Guard: only establish the session when registration actually succeeded
+    // (previously signed in with an undefined user on failure).
+    if (!result.ok || !result.user) {
+      alert(result.message || 'Could not create your profile. Please try again.');
+      return;
+    }
     signIn(result.user, true);
+    // The session cookie is now set; upload the selected photos. Each failure
+    // is non-fatal — toast and continue so registration still completes.
+    for (const file of form.photos || []) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await photosService.uploadPhoto(file);
+      if (!res.ok) {
+        showToast('Photo Upload Failed', 'A photo could not be uploaded. You can add it later from Edit Profile.', 'error', { duration: 4000, icon: 'fa-times-circle' });
+      }
+    }
     alert('Profile Created Successfully! Redirecting to Dashboard...');
     navigate('/dashboard');
   }
@@ -154,7 +174,7 @@ export default function Register() {
           </Transition>
 
           <Transition show={currentStep === 6} {...STEP_TRANSITION}>
-            <Step6Photos onBack={prevStep} />
+            <Step6Photos form={form} set={set} onBack={prevStep} />
           </Transition>
         </form>
       </div>

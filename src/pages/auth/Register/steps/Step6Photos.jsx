@@ -8,9 +8,18 @@ const TIPS = [
   'Upload a mix of close-ups and full-length traditional/casual photos.',
 ];
 
-export default function Step6Photos({ onBack }) {
+export default function Step6Photos({ form, set, onBack }) {
   const fileInputRef = useRef(null);
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+  // Store the selected File[] on the wizard form (do NOT upload here — upload
+  // happens in Register.handleSubmit once the session is established). Append so
+  // picking from different slots accumulates, then cap at 6 photos.
+  function onPick(fileList) {
+    const picked = Array.from(fileList || []);
+    if (!picked.length) return;
+    set('photos')([...(form?.photos || []), ...picked].slice(0, 6));
+  }
 
   return (
     <>
@@ -26,8 +35,8 @@ export default function Step6Photos({ onBack }) {
         multiple
         className="sr-only"
         onChange={(e) => {
-          // TODO: wire to upload handler
-          console.log('Selected files:', e.target.files);
+          onPick(e.target.files);
+          e.target.value = '';
         }}
       />
 

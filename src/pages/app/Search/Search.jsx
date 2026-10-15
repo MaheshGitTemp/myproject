@@ -45,9 +45,13 @@ export default function Search() {
 
   const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
   const openProfile = (p) => { const id = idOf(p); if (id) navigate(profileUrl(id)); };
-  // The result-card primary action (Message) opens the chat; the cards expose no
-  // heart/bookmark buttons, so interest/shortlist are not wired here.
-  const messageProfile = () => navigate('/chat');
+  // The result-card primary action (Message) opens the chat. Pass the target's
+  // MAT id to /chat (?with=) so the chat page can preselect that conversation;
+  // falls back to the plain /chat route when the id is unknown.
+  const messageProfile = (p) => {
+    const id = idOf(p);
+    navigate(id ? `/chat?with=${encodeURIComponent(id)}` : '/chat');
+  };
 
   // Reactive sort: reorders a copy of the current results whenever either changes.
   const sortedResults = useMemo(() => sortResults(results, sortBy), [results, sortBy]);
@@ -83,6 +87,18 @@ export default function Search() {
   const hasResults = sortedResults.length > 0;
   const showInitial = !hasSearched && !loading;
   const showEmpty = hasSearched && !loading && !hasResults;
+  // Reuse the already-fetched live results for Trending (top few) when any
+  // exist; otherwise fall back to the static TRENDING list. No extra API call.
+  // Live rowToCard results carry name/age/city but no `info` subtext, so map
+  // them to the TrendingNow item shape ({ matId, name, info, image }).
+  const trendingItems = results.length
+    ? results.slice(0, 6).map((p) => ({
+        matId: idOf(p),
+        name: p.name || p.fullName || 'Member',
+        info: [p.age, p.city || p.location].filter(Boolean).join(', '),
+        image: p.image,
+      }))
+    : TRENDING;
 
   return (
     <MainLayout variant="app" active="search" drawer={{ items: SEARCH_DRAWER_ITEMS }} mainClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
@@ -187,14 +203,14 @@ export default function Search() {
               <i aria-hidden="true" className="fas fa-undo" /> Clear All Filters
             </button>
           </div>
-          <TrendingNow items={TRENDING} onOpen={openProfile} />
+          <TrendingNow items={trendingItems} onOpen={openProfile} />
         </>
       )}
 
       {showInitial && (
         <>
           <SearchInitialState />
-          <TrendingNow items={TRENDING} onOpen={openProfile} />
+          <TrendingNow items={trendingItems} onOpen={openProfile} />
         </>
       )}
     </MainLayout>

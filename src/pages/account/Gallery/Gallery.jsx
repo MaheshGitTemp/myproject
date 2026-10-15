@@ -1,9 +1,10 @@
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import SettingRow from '../../../components/ui/SettingRow.jsx';
 import { PILLS } from '../../../components/layout/AccountSidebar.jsx';
 import { useToast } from '../../../context/ToastContext.jsx';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import AccountLayout from '../../../layouts/AccountLayout.jsx';
+import { deletePhoto, listMyPhotos, photoFileUrl, uploadPhoto } from '../../../services/photosService.js';
 
 const PRIVACY_ROWS = [
   { key: 'hideGallery', title: 'Hide Gallery', description: 'Hide from all users.' },
@@ -26,11 +27,42 @@ export default function Gallery() {
   const { showToast } = useToast();
   const fileInputRef = useRef(null);
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  // hideGallery / blurPhotos are kept local — there is no backend for these
+  // privacy toggles yet, so Save Settings only reflects the local state.
   const [privacy, setPrivacy] = useState({ hideGallery: false, blurPhotos: true });
-  const photos = []; // TODO: load from the API; upload is not wired in the original either
+  const [photos, setPhotos] = useState([]);
+
+  async function refetchPhotos() {
+    const res = await listMyPhotos();
+    setPhotos(res.photos || []);
+  }
+
+  useEffect(() => {
+    refetchPhotos();
+  }, []);
+
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    for (const file of files) {
+      // sequential so the backend sees them in order; failures are non-fatal.
+      // eslint-disable-next-line no-await-in-loop
+      const res = await uploadPhoto(file);
+      if (!res.ok) {
+        showToast('Upload Failed', 'One of your photos could not be uploaded.', 'error', { duration: 4000, icon: 'fa-times-circle' });
+      }
+    }
+    await refetchPhotos();
+  }
+
+  async function removePhoto(id) {
+    const res = await deletePhoto(id);
+    if (res.ok) await refetchPhotos();
+    else showToast('Delete Failed', 'Could not remove the photo. Please try again.', 'error', { duration: 4000, icon: 'fa-times-circle' });
+  }
 
   function saveSettings() {
-    // TODO: call the API here
+    // Local-only: these privacy toggles have no backend yet.
     showToast('Settings Saved', 'Your gallery privacy preferences have been updated.', 'success', { duration: 3000 });
   }
 
@@ -61,8 +93,8 @@ export default function Gallery() {
             multiple
             className="sr-only"
             onChange={(e) => {
-              // TODO: wire to upload handler
-              console.log('Selected files:', e.target.files);
+              handleFiles(e.target.files);
+              e.target.value = '';
             }}
           />
           <i aria-hidden="true" className="fas fa-images text-4xl text-slate-400 mb-3 group-hover:text-brand transition-colors" />
@@ -95,10 +127,28 @@ export default function Gallery() {
           </h3>
           <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">{`${photos.length} / ${MAX_PHOTOS} Uploaded`}</span>
         </div>
-        <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
-          <i aria-hidden="true" className="fas fa-camera text-4xl text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">No photos yet. Upload your first photo to get started!</p>
-        </div>
+        {photos.length === 0 ? (
+          <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
+            <i aria-hidden="true" className="fas fa-camera text-4xl text-slate-300 dark:text-slate-600 mb-3" />
+            <p className="text-sm text-slate-500 dark:text-slate-400">No photos yet. Upload your first photo to get started!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {photos.map((photo) => (
+              <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 group">
+                <img loading="lazy" decoding="async" src={photoFileUrl(photo.id, 'thumb')} alt="Gallery" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(photo.id)}
+                  className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition"
+                  aria-label="Delete photo"
+                >
+                  <i aria-hidden="true" className="fas fa-trash-alt text-xs" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

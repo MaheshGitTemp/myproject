@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PasswordInput from '../../../components/ui/PasswordInput.jsx';
 import Transition from '../../../components/ui/Transition.jsx';
+import { closeAccount, deactivateAccount } from '../../../services/accountService.js';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import { useToast } from '../../../context/ToastContext.jsx';
 import usePageMeta from '../../../hooks/usePageMeta.js';
@@ -31,7 +32,7 @@ export default function CloseAccount() {
     robots: 'noindex, nofollow',
   });
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { member, signOut } = useAuth();
   const { showToast } = useToast();
 
   const [reason, setReason] = useState('');
@@ -40,13 +41,15 @@ export default function CloseAccount() {
   const [passwordError, setPasswordError] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  function handleDeactivate() {
+  async function handleDeactivate() {
     if (!reason) {
       showToast('Reason Required', 'Please select a reason for deactivation.', 'error', { duration: 4000, icon: 'fa-times-circle' });
       return;
     }
-    // TODO: call the API here
+    await deactivateAccount();
     showToast('Account Deactivated', 'Your profile is now hidden. Log in anytime to reactivate.', 'success', { duration: 4000 });
+    signOut();
+    navigate('/login');
   }
 
   function openDeleteModal() {
@@ -58,9 +61,9 @@ export default function CloseAccount() {
     setShowModal(true);
   }
 
-  function performDelete() {
+  async function performDelete() {
     setShowModal(false);
-    // TODO: call the API here
+    await closeAccount();
     showToast('Account Deleted', 'Your account has been scheduled for permanent deletion.', 'success', { duration: 4000 });
     // Original redirected to the home page after 3s. The account is gone, so the session ends too.
     setTimeout(() => { signOut(); navigate('/'); }, 3000);
@@ -107,7 +110,7 @@ export default function CloseAccount() {
       description="We're sad to see you go. Choose an option below to manage your account status."
       sidebarActive="close-account"
       sidebarVariant="compact-legacy"
-      badges={{ chat: 5 }}
+      badges={{ chat: member?.unread?.chat ?? 0 }}
       overlays={modal}
     >
       {/* Option 1: Deactivate (Temporary) */}

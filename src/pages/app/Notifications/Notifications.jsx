@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../../context/AuthContext.jsx';
 import { useToast } from '../../../context/ToastContext.jsx';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import AccountLayout from '../../../layouts/AccountLayout.jsx';
@@ -43,6 +44,7 @@ export default function Notifications() {
     description: 'Manage the interests you have received and track the ones you have sent.',
     robots: 'noindex, nofollow',
   });
+  const { member } = useAuth();
   const { showToast } = useToast();
   const [tab, setTab] = useState('received');
   const [received, setReceived] = useState([]);
@@ -89,7 +91,7 @@ export default function Notifications() {
       pills={NOTIFICATION_PILLS}
       navActive="dashboard"
       navLastItem="dashboard"
-      badges={{ chat: 5 }}
+      badges={{ chat: member?.unread?.chat ?? 0 }}
     >
       <div className="glass rounded-2xl card-shadow overflow-hidden">
         <div className="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/50">

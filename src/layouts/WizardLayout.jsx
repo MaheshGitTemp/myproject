@@ -22,7 +22,7 @@ export default function WizardLayout() {
       <main id="main-content" tabIndex={-1} className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-slide-up">
         <Outlet />
       </main>
-      <MobileBottomNav active="me" badges={{ chat: 5 }} />
+      <MobileBottomNav active="me" badges={{ chat: 0 }} />
       <Footer />
     </div>
   );

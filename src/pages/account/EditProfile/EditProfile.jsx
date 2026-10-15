@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FormInput from '../../../components/ui/FormInput.jsx';
 import SelectField from '../../../components/ui/SelectField.jsx';
 import SettingRow from '../../../components/ui/SettingRow.jsx';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import { useToast } from '../../../context/ToastContext.jsx';
+import { getMyProfile, updateMyProfile } from '../../../services/accountService.js';
+import { deletePhoto, listMyPhotos, photoFileUrl, uploadPhoto } from '../../../services/photosService.js';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import AccountLayout from '../../../layouts/AccountLayout.jsx';
 import { PILLS } from '../../../components/layout/AccountSidebar.jsx';
@@ -65,6 +67,81 @@ export default function EditProfile() {
     firstName: user?.firstName || INITIAL_PROFILE.firstName,
     lastName: user?.lastName || INITIAL_PROFILE.lastName,
   }));
+  const [photos, setPhotos] = useState([]);
+
+  async function refetchPhotos() {
+    const res = await listMyPhotos();
+    setPhotos(res.photos || []);
+  }
+
+  // Load the member's own profile + preferences on mount and map them onto the
+  // form. The backend getMyProfile() already returns EditProfile-shaped keys
+  // (rowToDetail profile fields + prefsToForm pref* fields — the inverse of
+  // authService.registerProfile's wizard->backend mapping), so we merge any
+  // defined value over the INITIAL_PROFILE defaults and never clobber a field
+  // the API left null/undefined.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      let data = null;
+      try {
+        data = await getMyProfile();
+      } catch {
+        data = null; // network error -> keep defaults
+      }
+      if (!active || !data) return;
+      const { profile, preferences } = data;
+      setForm((f) => {
+        const next = { ...f };
+        const apply = (obj) => {
+          if (!obj) return;
+          Object.entries(obj).forEach(([key, val]) => {
+            if (key in INITIAL_PROFILE && val !== undefined && val !== null && val !== '') {
+              next[key] = val;
+            }
+          });
+        };
+        // profile fields pass straight through (headline, about, firstName,
+        // lastName, gender, dob, height, weight, maritalStatus, bodyType,
+        // motherTongue, physicalStatus, phone, email, city, state, residency,
+        // subCaste, gothram, rasi, nakshatra, padam, manglik, education,
+        // fieldOfStudy, college, occupation, employedIn, company, income,
+        // workLocation, fatherOccupation, motherOccupation, siblings,
+        // familyType, familyValues, familyStatus, diet, smoking, drinking,
+        // hobbies). dob from rowToDetail is YYYY-MM-DD for the date input.
+        apply(profile);
+        // preferences: lookingFor, prefLocation, prefAgeFrom/prefAgeTo,
+        // prefHeightFrom/prefHeightTo, prefMaritalStatus, prefEducation,
+        // prefOccupation, prefDiet (already pref* keys from prefsToForm).
+        apply(preferences);
+        return next;
+      });
+    })();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    refetchPhotos();
+  }, []);
+
+  async function handlePhotoFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    for (const file of files) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await uploadPhoto(file);
+      if (!res.ok) {
+        showToast('Upload Failed', 'One of your photos could not be uploaded.', 'error', { duration: 4000, icon: 'fa-times-circle' });
+      }
+    }
+    await refetchPhotos();
+  }
+
+  async function removePhoto(id) {
+    const res = await deletePhoto(id);
+    if (res.ok) await refetchPhotos();
+    else showToast('Delete Failed', 'Could not remove the photo. Please try again.', 'error', { duration: 4000, icon: 'fa-times-circle' });
+  }
   const bind = (key) => ({
     value: form[key],
     onChange: (e) => setForm((f) => ({ ...f, [key]: e.target.value })),
@@ -87,10 +164,16 @@ export default function EditProfile() {
     }),
   });
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // TODO: call the API here
-    showToast('Profile Updated', 'Your personal details have been saved successfully.', 'success', { duration: 3000 });
+    // The form keys already match the EditProfile payload PUT /profiles/me
+    // (buildProfileFields/buildPreferenceFields) accepts, so send as-is.
+    const res = await updateMyProfile(form);
+    if (res.ok) {
+      showToast('Profile Updated', 'Your personal details have been saved successfully.', 'success', { duration: 3000 });
+    } else {
+      showToast('Update Failed', 'Could not save your profile. Please try again.', 'error', { duration: 4000, icon: 'fa-times-circle' });
+    }
   }
 
   return (
@@ -236,8 +319,9 @@ export default function EditProfile() {
                 accept="image/jpeg,image/png"
                 multiple
                 className="sr-only"
-                onChange={() => {
-                  // TODO: wire to upload handler
+                onChange={(e) => {
+                  handlePhotoFiles(e.target.files);
+                  e.target.value = '';
                 }}
               />
               <i aria-hidden="true" className="fas fa-images text-4xl text-slate-400 mb-3 group-hover:text-brand transition-colors" />
@@ -256,6 +340,23 @@ export default function EditProfile() {
               </button>
               <p className="text-xs text-slate-400 mt-3">Supports JPG, PNG. Max 5MB per file.</p>
             </div>
+            {photos.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
+                {photos.map((photo) => (
+                  <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 group">
+                    <img loading="lazy" decoding="async" src={photoFileUrl(photo.id, 'thumb')} alt="Profile" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(photo.id)}
+                      className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition"
+                      aria-label="Delete photo"
+                    >
+                      <i aria-hidden="true" className="fas fa-trash-alt text-[11px]" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>

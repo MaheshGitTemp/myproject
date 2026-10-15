@@ -77,7 +77,7 @@ export default function ProfileDetails() {
       <AppMenuDrawer open={menuOpen} onClose={() => setMenuOpen(false)} member={member} onLogout={askLogout} />
       <LogoutModal open={logoutOpen} onCancel={() => setLogoutOpen(false)} onConfirm={confirmLogout} />
 
-      <MobileBottomNav active="search" badges={{ chat: 5 }} />
+      <MobileBottomNav active="search" badges={{ chat: member?.unread?.chat ?? 0 }} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { config } from '../config/index.js';
-import { buildMember, getMe, getMyProfile } from '../services/accountService.js';
+import { buildMember, getMe, getMyProfile, getStats } from '../services/accountService.js';
 import { CURRENT_MEMBER } from '../services/profileService.js';
 
 // Mock session. Stored in localStorage ("remember me") or sessionStorage.
@@ -43,7 +43,28 @@ export function AuthProvider({ children }) {
       } catch {
         profile = null; // identity is enough to build a member
       }
-      setMember(buildMember(me, profile));
+      const base = buildMember(me, profile);
+      // Hydrate the real stats + unread counts on top of buildMember's safe
+      // zeros. getStats() never throws (it falls back to zeros), so a failure
+      // here just leaves the defensive defaults in place.
+      try {
+        const { stats, unread } = await getStats();
+        const s = stats || {};
+        const u = unread || {};
+        base.stats = {
+          views: Number(s.profileViews) || 0,
+          shortlisted: Number(s.shortlistedCount) || 0,
+          mutual: Number(s.mutual) || 0,
+        };
+        base.unread = {
+          notifications: Number(u.notifications) || 0,
+          chat: Number(u.chat) || 0,
+          dashboard: 0,
+        };
+      } catch {
+        // keep buildMember's defensive zeros
+      }
+      setMember(base);
     } catch {
       // network error reaching the API
       if (config.USE_MOCK_FALLBACK) setMember(CURRENT_MEMBER);

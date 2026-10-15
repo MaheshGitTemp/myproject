@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PasswordInput from '../../../components/ui/PasswordInput.jsx';
+import { changePassword } from '../../../services/accountService.js';
 import { useToast } from '../../../context/ToastContext.jsx';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import AccountLayout from '../../../layouts/AccountLayout.jsx';
@@ -41,12 +42,21 @@ export default function ChangePassword() {
   const isFormValid =
     form.current.length > 0 && form.newPass.length >= 8 && reqs.upper && reqs.number && form.newPass === form.confirm;
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!isFormValid) return;
-    // TODO: call the API here (authService.changePassword)
-    showToast('Password Updated', 'Your password has been changed successfully.', 'success');
-    setForm(EMPTY);
+    const res = await changePassword({ currentPassword: form.current, newPassword: form.newPass });
+    if (res.ok) {
+      showToast('Password Updated', 'Your password has been changed successfully.', 'success');
+      setForm(EMPTY);
+      return;
+    }
+    // wrong_password -> clearer copy; otherwise surface the backend message.
+    const message =
+      res.error === 'wrong_password'
+        ? 'Current password is incorrect.'
+        : res.message || 'Could not update your password. Please try again.';
+    showToast('Update Failed', message, 'error', { duration: 4000, icon: 'fa-times-circle' });
   }
 
   return (
