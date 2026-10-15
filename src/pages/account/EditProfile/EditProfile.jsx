@@ -166,9 +166,14 @@ export default function EditProfile() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    // The form keys already match the EditProfile payload PUT /profiles/me
-    // (buildProfileFields/buildPreferenceFields) accepts, so send as-is.
-    const res = await updateMyProfile(form);
+    // Most form keys already match the PUT /profiles/me payload
+    // (buildProfileFields/buildPreferenceFields) 1:1, EXCEPT the preferred age
+    // range: the backend PREFERENCE_FIELD_MAP keys age_from/age_to to
+    // ageFrom/ageTo (the keys authService.registerProfile sends), while this
+    // form binds prefAgeFrom/prefAgeTo. Alias them on save so the age range
+    // actually persists (without touching Register's ageFrom/ageTo path).
+    const payload = { ...form, ageFrom: form.prefAgeFrom, ageTo: form.prefAgeTo };
+    const res = await updateMyProfile(payload);
     if (res.ok) {
       showToast('Profile Updated', 'Your personal details have been saved successfully.', 'success', { duration: 3000 });
     } else {

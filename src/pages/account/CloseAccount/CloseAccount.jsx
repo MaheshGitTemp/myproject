@@ -62,6 +62,11 @@ export default function CloseAccount() {
   }
 
   async function performDelete() {
+    // NOTE: the "Confirm your password" field + checkbox are a client-only
+    // confirmation gate for this irreversible action. The pre-existing
+    // /account/close endpoint deletes the authenticated user from the session
+    // and does NOT re-verify the entered password (re-auth on delete would be
+    // a backend contract change, out of scope here).
     setShowModal(false);
     await closeAccount();
     showToast('Account Deleted', 'Your account has been scheduled for permanent deletion.', 'success', { duration: 4000 });
