@@ -89,7 +89,15 @@ export async function deletePhoto(id) {
 /**
  * Build the authorized file URL for a photo. `variant` (e.g. 'thumb') is added
  * as a query param when provided. Maps to GET /photos/file/:id[?variant=].
+ *
+ * This returns a SAME-ORIGIN /api path (not config.API_BASE) on purpose. The
+ * URL is consumed by <img src=...>, an image subresource — not a fetch with
+ * credentials:'include'. Pointing it at the current origin (served through the
+ * Vite /api dev proxy in dev, and the same reverse proxy in prod) guarantees the
+ * session cookie rides, so the owner can see their own still-pending photos.
+ * A cross-port absolute URL risks a dropped sameSite:'lax' cookie on the <img>
+ * request, which 404s the owner and renders a broken/'corrupted' image.
  */
 export function photoFileUrl(id, variant) {
-  return `${config.API_BASE}/photos/file/${id}` + (variant ? `?variant=${variant}` : '');
+  return `/api/photos/file/${id}` + (variant ? `?variant=${variant}` : '');
 }

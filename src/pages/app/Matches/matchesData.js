@@ -27,7 +27,7 @@ export function applyFilters(list, activeFilters, query) {
   if (activeFilters.includes('premium')) out = out.filter((p) => p.premium);
   if (activeFilters.includes('verified')) out = out.filter((p) => p.verified);
   const q = query.trim().toLowerCase();
-  if (q) out = out.filter((p) => [p.name, p.location, p.caste, p.job].some((v) => v.toLowerCase().includes(q)));
+  if (q) out = out.filter((p) => [p.name, p.location, p.caste, p.job].some((v) => String(v || '').toLowerCase().includes(q)));
   return out;
 }
 
