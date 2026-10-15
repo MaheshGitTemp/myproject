@@ -9,14 +9,30 @@
 // closure (accountRepo.deleteUserFully). block-user is reversible (it writes a
 // blocks row with blocked_by_admin=true and bumps users.admin_block_count);
 // delete-user is permanent.
-import { query } from '../../db.js';
+import { query, queryOne } from '../../db.js';
 import { normalizeMatId } from '../profiles/matId.js';
-import { getUserIdByMatId } from '../profiles/profilesRepo.js';
-import { block } from '../interactions/blocksRepo.js';
+import {
+  getUserIdByMatId,
+  getProfileByMatId,
+  getPreferencesByUserId,
+  rowToDetail,
+} from '../profiles/profilesRepo.js';
+import { block, unblock, userBlockCounts } from '../interactions/blocksRepo.js';
 import { deleteUserFully } from '../account/accountRepo.js';
 import * as settings from '../settings/settingsService.js';
 import * as photosRepo from '../photos/photosRepo.js';
 import * as storage from '../storage/localStorage.js';
+
+// Allowed users.status values (001_init.sql CHECK) — used to validate the
+// optional status filter on the user listing.
+const USER_STATUSES = ['pending_otp', 'pending_approval', 'active', 'suspended', 'closed'];
+
+/** Clamp an integer to [min, max], falling back to `def` when unparseable. */
+function clampInt(val, def, min, max) {
+  const n = parseInt(val, 10);
+  if (!Number.isFinite(n)) return def;
+  return Math.min(Math.max(n, min), max);
+}
 
 /**
  * Guard: requireAuth + the user must be an administrator. `req.user` carries
@@ -200,6 +216,274 @@ export async function listPending(req, res, next) {
       pendingUsers: users.rows,
       pendingPhotos: photos.rows,
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/admin/stats — dashboard KPI counts. Read-only, no audit.
+ * All counts are parameterless COUNT(*)::int queries; "today" compares the
+ * timestamp cast to ::date against current_date (contact_unlocks uses
+ * unlocked_at, 004_contact.sql).
+ */
+export async function getStats(req, res, next) {
+  try {
+    const row = await queryOne(
+      `SELECT
+         (SELECT COUNT(*)::int FROM users) AS total_members,
+         (SELECT COUNT(*)::int FROM users WHERE status = 'pending_approval') AS pending_approval,
+         (SELECT COUNT(*)::int FROM users WHERE status = 'active') AS active,
+         (SELECT COUNT(*)::int FROM users WHERE status = 'suspended') AS suspended,
+         (SELECT COUNT(*)::int FROM photos WHERE status = 'pending') AS pending_photos,
+         (SELECT COUNT(*)::int FROM users WHERE created_at::date = current_date) AS signups_today,
+         (SELECT COUNT(*)::int FROM contact_unlocks WHERE unlocked_at::date = current_date) AS unlocks_today`,
+    );
+    res.json({
+      ok: true,
+      stats: {
+        totalMembers: row.total_members,
+        pendingApproval: row.pending_approval,
+        active: row.active,
+        suspended: row.suspended,
+        pendingPhotos: row.pending_photos,
+        signupsToday: row.signups_today,
+        unlocksToday: row.unlocks_today,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/admin/users?query=&status=&page=&limit= — searchable, filterable,
+ * paginated member list. Joins users + profiles. Read-only, no audit.
+ */
+export async function listUsers(req, res, next) {
+  try {
+    const where = [];
+    const params = [];
+    const add = (val) => {
+      params.push(val);
+      return `$${params.length}`;
+    };
+
+    const q = typeof req.query.query === 'string' ? req.query.query.trim() : '';
+    if (q) {
+      const p = add(`%${q}%`);
+      where.push(`(p.full_name ILIKE ${p} OR u.email ILIKE ${p} OR u.mat_id ILIKE ${p})`);
+    }
+
+    const status = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+    if (status && USER_STATUSES.includes(status)) {
+      where.push(`u.status = ${add(status)}`);
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    const totalRow = await queryOne(
+      `SELECT COUNT(*)::int AS total
+         FROM users u
+         LEFT JOIN profiles p ON p.user_id = u.id
+         ${whereSql}`,
+      params,
+    );
+    const total = totalRow ? totalRow.total : 0;
+
+    const page = clampInt(req.query.page, 1, 1, 1_000_000);
+    const limit = clampInt(req.query.limit, 20, 1, 100);
+    const offset = (page - 1) * limit;
+
+    const limitParam = add(limit);
+    const offsetParam = add(offset);
+
+    const { rows } = await query(
+      `SELECT u.mat_id, u.email, u.phone, u.status, u.is_verified, u.admin_approved,
+              u.created_at, p.full_name, p.premium, p.city, p.state
+         FROM users u
+         LEFT JOIN profiles p ON p.user_id = u.id
+         ${whereSql}
+        ORDER BY u.created_at DESC
+        LIMIT ${limitParam} OFFSET ${offsetParam}`,
+      params,
+    );
+
+    const results = rows.map((r) => ({
+      matId: r.mat_id,
+      email: r.email,
+      phone: r.phone,
+      status: r.status,
+      isVerified: r.is_verified,
+      adminApproved: r.admin_approved,
+      premium: r.premium === true,
+      name: r.full_name,
+      city: r.city,
+      state: r.state,
+      createdAt: r.created_at,
+    }));
+
+    res.json({ ok: true, results, total, page, limit });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/admin/users/:matId — full member detail for the admin UI.
+ * Admins are privileged viewers, so the profile is shaped with { self:true }
+ * (all contact visible). Adds account fields, preferences, photos (any status)
+ * and block counts both directions. Read-only, no audit.
+ */
+export async function getUserDetail(req, res, next) {
+  try {
+    const resolved = await resolveMatIdParam(req, res);
+    if (!resolved) return;
+
+    const profileRow = await getProfileByMatId(resolved.matId);
+    // Admin is a privileged viewer -> show full contact (self shorthand).
+    const detail = profileRow ? rowToDetail(profileRow, { contact: { self: true } }) : {};
+
+    const [preferences, account, photosResult, counts] = await Promise.all([
+      getPreferencesByUserId(resolved.userId),
+      queryOne(
+        `SELECT status, email_verified, phone_verified, is_verified, admin_approved,
+                admin_block_count, created_at, last_login_at
+           FROM users WHERE id = $1`,
+        [resolved.userId],
+      ),
+      query(
+        `SELECT id, status, is_primary
+           FROM photos
+          WHERE user_id = $1
+          ORDER BY is_primary DESC, created_at DESC`,
+        [resolved.userId],
+      ),
+      userBlockCounts(resolved.userId),
+    ]);
+
+    const photos = photosResult.rows.map((ph) => ({
+      id: ph.id,
+      status: ph.status,
+      isPrimary: ph.is_primary,
+    }));
+
+    res.json({
+      ok: true,
+      user: {
+        ...detail,
+        preferences: preferences || null,
+        status: account ? account.status : null,
+        emailVerified: account ? account.email_verified : null,
+        phoneVerified: account ? account.phone_verified : null,
+        isVerified: account ? account.is_verified : null,
+        adminApproved: account ? account.admin_approved : null,
+        adminBlockCount: account ? account.admin_block_count : null,
+        createdAt: account ? account.created_at : null,
+        lastLoginAt: account ? account.last_login_at : null,
+        photos,
+        counts: { blocksMade: counts.blocked, blockedBy: counts.blockedBy },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/admin/users/:matId/suspend  body { reason? }
+ * Sets users.status='suspended' and audits.
+ */
+export async function suspendUser(req, res, next) {
+  try {
+    const resolved = await resolveMatIdParam(req, res);
+    if (!resolved) return;
+    const reason = (req.body && req.body.reason) ? String(req.body.reason) : null;
+    await query(`UPDATE users SET status = 'suspended' WHERE id = $1`, [resolved.userId]);
+    await audit(req.user.id, 'suspend_user', resolved.matId, { reason });
+    res.json({ ok: true, status: 'suspended' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** POST /api/admin/users/:matId/unsuspend — sets users.status='active' + audit. */
+export async function unsuspendUser(req, res, next) {
+  try {
+    const resolved = await resolveMatIdParam(req, res);
+    if (!resolved) return;
+    await query(`UPDATE users SET status = 'active' WHERE id = $1`, [resolved.userId]);
+    await audit(req.user.id, 'unsuspend_user', resolved.matId, {});
+    res.json({ ok: true, status: 'active' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/admin/users/:matId/unblock — removes the admin->target block row
+ * created by blockUser (does NOT touch the historical admin_block_count). Audit.
+ */
+export async function unblockUser(req, res, next) {
+  try {
+    const resolved = await resolveMatIdParam(req, res);
+    if (!resolved) return;
+    const unblocked = await unblock(req.user.id, resolved.userId);
+    await audit(req.user.id, 'unblock_user', resolved.matId, {});
+    res.json({ ok: true, unblocked });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/admin/settings — all admin-editable settings as a key:value object
+ * (settingsService.getAll merges DB values over defaults). Read-only.
+ */
+export async function getSettings(req, res, next) {
+  try {
+    const all = await settings.getAll();
+    res.json({ ok: true, settings: all });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/admin/audit?page=&limit= — the admin action trail joined to the
+ * acting admin's mat_id (LEFT JOIN handles the SET NULL admin_id case).
+ * Read-only, paginated.
+ */
+export async function listAudit(req, res, next) {
+  try {
+    const page = clampInt(req.query.page, 1, 1, 1_000_000);
+    const limit = clampInt(req.query.limit, 20, 1, 100);
+    const offset = (page - 1) * limit;
+
+    const totalRow = await queryOne('SELECT COUNT(*)::int AS total FROM admin_audit');
+    const total = totalRow ? totalRow.total : 0;
+
+    const { rows } = await query(
+      `SELECT a.id, a.admin_id, u.mat_id AS admin_mat_id, a.action, a.target,
+              a.detail, a.created_at
+         FROM admin_audit a
+         LEFT JOIN users u ON u.id = a.admin_id
+        ORDER BY a.created_at DESC
+        LIMIT $1 OFFSET $2`,
+      [limit, offset],
+    );
+
+    const results = rows.map((r) => ({
+      id: r.id,
+      adminId: r.admin_id,
+      adminMatId: r.admin_mat_id,
+      action: r.action,
+      target: r.target,
+      detail: r.detail,
+      createdAt: r.created_at,
+    }));
+
+    res.json({ ok: true, results, total });
   } catch (err) {
     next(err);
   }

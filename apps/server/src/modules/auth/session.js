@@ -91,6 +91,7 @@ export function publicUser(u) {
     phoneVerified: u.phone_verified,
     isVerified: u.is_verified,
     adminApproved: u.admin_approved,
+    isAdmin: u.is_admin,
     firstName: u.first_name || null,  // populated once profiles land
     lastName: u.last_name || null,
   };

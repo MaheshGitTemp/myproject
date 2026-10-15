@@ -12,6 +12,14 @@ import {
   deleteUser,
   updateSettings,
   listPending,
+  getStats,
+  listUsers,
+  getUserDetail,
+  suspendUser,
+  unsuspendUser,
+  unblockUser,
+  getSettings,
+  listAudit,
 } from './adminController.js';
 
 export const adminRouter = Router();
@@ -19,10 +27,24 @@ export const adminRouter = Router();
 // Every admin route requires an administrator.
 adminRouter.use(requireAdmin);
 
+// Static read-only paths first (declared before any /:param route to avoid
+// param shadowing).
+adminRouter.get('/stats', getStats);
 adminRouter.get('/pending', listPending);
+adminRouter.get('/settings', getSettings);
+adminRouter.get('/audit', listAudit);
+
+// User listing + detail.
+adminRouter.get('/users', listUsers);
+adminRouter.get('/users/:matId', getUserDetail);
+
+// Mutating member actions.
 adminRouter.post('/profiles/:matId/approve', approveProfile);
 adminRouter.post('/photos/:id/approve', approvePhoto);
 adminRouter.post('/photos/:id/reject', rejectPhoto);
+adminRouter.post('/users/:matId/suspend', suspendUser);
+adminRouter.post('/users/:matId/unsuspend', unsuspendUser);
 adminRouter.post('/users/:matId/block', blockUser);
+adminRouter.post('/users/:matId/unblock', unblockUser);
 adminRouter.delete('/users/:matId', deleteUser);
 adminRouter.put('/settings', updateSettings);

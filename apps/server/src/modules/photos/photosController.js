@@ -133,8 +133,11 @@ export async function servePhotoFile(req, res, next) {
 
     const viewer = req.user;
     const isOwner = viewer && viewer.id === row.user_id;
+    // Admins are privileged viewers: they can render ANY photo (any status,
+    // incl. ?variant=thumb) so the moderation UI can show pending photos.
+    const isAdmin = !!(viewer && viewer.is_admin);
 
-    if (!isOwner) {
+    if (!isOwner && !isAdmin) {
       // Non-owners only ever see approved photos.
       if (row.status !== 'approved') return res.status(404).json({ error: 'not_found' });
 
