@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import MainLayout from '../../../layouts/MainLayout.jsx';
-import { CURRENT_MEMBER as m } from '../../../services/profileService.js';
+import { useAuth } from '../../../context/AuthContext.jsx';
+import { FALLBACK_MEMBER } from '../../../services/accountService.js';
 import { SETTINGS_LINKS, TONES } from './meData.js';
 
 export default function Me() {
@@ -10,6 +11,9 @@ export default function Me() {
     description: 'Manage your Telugu Sambandham profile, privacy and account settings.',
     robots: 'noindex, nofollow',
   });
+
+  const { member } = useAuth();
+  const m = member || FALLBACK_MEMBER;
 
   return (
     <MainLayout active="me">
@@ -23,7 +27,9 @@ export default function Me() {
           <div className="glass rounded-3xl p-6 card-shadow mb-8 flex flex-col md:flex-row items-center md:items-start gap-6">
             <div className="relative">
               <img loading="lazy" decoding="async" alt="Profile photo" src={m.photo} className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-slate-700 shadow-lg" />
-              <span className="absolute bottom-1 right-1 px-2 py-0.5 bg-gold text-white text-[10px] font-bold rounded-full shadow">PREMIUM</span>
+              {m.premium && (
+                <span className="absolute bottom-1 right-1 px-2 py-0.5 bg-gold text-white text-[10px] font-bold rounded-full shadow">PREMIUM</span>
+              )}
             </div>
             <div className="flex-1 text-center md:text-left">
               <h2 className="text-2xl font-heading font-bold">{m.firstName} {m.lastName}</h2>

@@ -7,7 +7,7 @@ import MainHeader from '../components/layout/MainHeader.jsx';
 import AppMenuDrawer from '../components/layout/AppMenuDrawer.jsx';
 import MobileBottomNav from '../components/layout/MobileBottomNav.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import { CURRENT_MEMBER } from '../services/profileService.js';
+import { FALLBACK_MEMBER } from '../services/accountService.js';
 import '../styles/account.css';
 
 // Shell for logged-in account pages (Dashboard, Edit Profile, Gallery, ...):
@@ -36,8 +36,8 @@ export default function AccountLayout({
   overlays,
   children,
 }) {
-  const member = CURRENT_MEMBER;
-  const { signOut } = useAuth();
+  const { member: authMember, signOut } = useAuth();
+  const member = authMember || FALLBACK_MEMBER;
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);

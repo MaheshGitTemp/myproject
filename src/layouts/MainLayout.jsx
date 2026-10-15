@@ -7,7 +7,7 @@ import MainHeader from '../components/layout/MainHeader.jsx';
 import MobileBottomNav from '../components/layout/MobileBottomNav.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import useBodyClass from '../hooks/useBodyClass.js';
-import { CURRENT_MEMBER } from '../services/profileService.js';
+import { FALLBACK_MEMBER } from '../services/accountService.js';
 
 const BODY = 'bg-gradient-to-br from-brand-soft via-white to-rose-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-500 min-h-screen pb-safe-nav md:pb-10';
 
@@ -28,9 +28,9 @@ export default function MainLayout({
   children,
 }) {
   useBodyClass(BODY);
-  const member = CURRENT_MEMBER;
   const isApp = variant === 'app';
-  const { signOut } = useAuth();
+  const { member: authMember, signOut } = useAuth();
+  const member = authMember || FALLBACK_MEMBER;
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
