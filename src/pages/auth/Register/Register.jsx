@@ -6,6 +6,7 @@ import useCooldown from '../../../hooks/useCooldown.js';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import * as authService from '../../../services/authService.js';
 import * as photosService from '../../../services/photosService.js';
+import { mapApiError } from '../../../services/apiError.js';
 import { useToast } from '../../../context/ToastContext.jsx';
 import '../../../styles/pages/register.css';
 import ProgressIndicator from './ProgressIndicator.jsx';
@@ -70,15 +71,27 @@ export default function Register() {
     if (focusOtpTick > 0) otpRef.current?.focusFirst();
   }, [focusOtpTick]);
 
+  // In dev the backend returns the OTP so it can be tested without SMTP; show it
+  // as an info toast. Never present in production responses.
+  function showDevOtp(devOtp) {
+    if (devOtp) showToast('Dev OTP', `Your verification code is ${devOtp}`, 'info', { duration: 8000, icon: 'fa-key' });
+  }
+
   async function handleSendOtp() {
     if (!form.phone && !form.email) {
-      alert('Please enter your phone number or email address.');
+      showToast('Missing details', 'Please enter your phone number or email address.', 'error');
       return;
     }
     setIsLoading(true);
     clearOtp();
-    await authService.sendOtp(form);
+    const result = await authService.sendOtp(form);
     setIsLoading(false);
+    if (!result.ok) {
+      const { title, message } = mapApiError({ status: result.status, error: result.error, context: 'otp-send' });
+      showToast(title, result.message || message, 'error');
+      return;
+    }
+    showDevOtp(result.devOtp);
     setCurrentStep(2);
     startCooldown();
     setFocusOtpTick((n) => n + 1);
@@ -86,13 +99,20 @@ export default function Register() {
 
   async function handleVerifyOtp() {
     if (otp.join('').length !== 6) {
-      alert('Please enter the complete 6-digit OTP.');
+      showToast('Incomplete code', 'Please enter the complete 6-digit OTP.', 'error');
       otpRef.current?.focusFirst();
       return;
     }
     setIsLoading(true);
-    await authService.verifyOtp(otp.join(''));
+    const result = await authService.verifyOtp(otp.join(''));
     setIsLoading(false);
+    if (!result.ok) {
+      const { title, message } = mapApiError({ status: result.status, error: result.error, context: 'otp' });
+      showToast(title, message, 'error');
+      clearOtp();
+      otpRef.current?.focusFirst();
+      return;
+    }
     setCurrentStep(3);
     scrollTop();
   }
@@ -100,8 +120,15 @@ export default function Register() {
   async function handleResendOtp() {
     if (cooldown > 0) return;
     setIsLoading(true);
-    await authService.resendOtp(form);
+    const result = await authService.resendOtp(form);
     setIsLoading(false);
+    if (!result.ok) {
+      const { title, message } = mapApiError({ status: result.status, error: result.error, context: 'otp-send' });
+      showToast(title, message, 'error');
+      return;
+    }
+    showDevOtp(result.devOtp);
+    showToast('Code sent', 'A new verification code has been sent.', 'success');
     clearOtp();
     startCooldown();
     setFocusOtpTick((n) => n + 1);
@@ -120,7 +147,8 @@ export default function Register() {
     // Guard: only establish the session when registration actually succeeded
     // (previously signed in with an undefined user on failure).
     if (!result.ok || !result.user) {
-      alert(result.message || 'Could not create your profile. Please try again.');
+      const { title, message } = mapApiError({ status: result.status, error: result.error });
+      showToast(title, result.message || message, 'error');
       return;
     }
     signIn(result.user, true);
@@ -133,8 +161,8 @@ export default function Register() {
         showToast('Photo Upload Failed', 'A photo could not be uploaded. You can add it later from Edit Profile.', 'error', { duration: 4000, icon: 'fa-times-circle' });
       }
     }
-    alert('Profile Created Successfully! Redirecting to Dashboard...');
-    navigate('/dashboard');
+    showToast('Welcome!', 'Profile created successfully. Redirecting to your dashboard...', 'success');
+    setTimeout(() => navigate('/dashboard'), 1200);
   }
 
   return (

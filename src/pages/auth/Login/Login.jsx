@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/AuthContext.jsx';
 import { useToast } from '../../../context/ToastContext.jsx';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import { login } from '../../../services/authService.js';
+import { mapApiError } from '../../../services/apiError.js';
 
 export default function Login() {
   usePageMeta({
@@ -34,7 +35,8 @@ export default function Login() {
       signIn(result.user, form.remember);
       setTimeout(() => navigate(location.state?.from?.pathname || '/dashboard', { replace: true }), 1500);
     } else {
-      showToast('Login Failed', 'Invalid credentials. Please check your phone/email and password.', 'error');
+      const { title, message } = mapApiError({ status: result.status, error: result.error, context: 'login' });
+      showToast(title, message, 'error');
     }
   }
 

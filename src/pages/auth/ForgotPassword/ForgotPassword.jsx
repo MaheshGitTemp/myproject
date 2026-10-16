@@ -8,6 +8,7 @@ import { useToast } from '../../../context/ToastContext.jsx';
 import useCooldown from '../../../hooks/useCooldown.js';
 import usePageMeta from '../../../hooks/usePageMeta.js';
 import * as authService from '../../../services/authService.js';
+import { mapApiError } from '../../../services/apiError.js';
 
 const EMPTY_OTP = ['', '', '', '', '', ''];
 
@@ -38,22 +39,34 @@ export default function ForgotPassword() {
     if (!form.identifier) return;
     setIsLoading(true);
     setOtp(EMPTY_OTP);
-    await authService.sendResetOtp(form.identifier);
+    const result = await authService.sendResetOtp(form.identifier);
     setIsLoading(false);
+    if (!result.ok) {
+      const { title, message } = mapApiError({ status: result.status, error: result.error, context: 'otp-send' });
+      showToast(title, message, 'error');
+      return;
+    }
     setCurrentStep(2);
     startCooldown();
-    showToast('OTP Sent', 'A 6-digit code has been sent to your email/phone.', 'success');
+    if (result.devOtp) showToast('Dev OTP', `Your reset code is ${result.devOtp}`, 'info', { duration: 8000, icon: 'fa-key' });
+    else showToast('OTP Sent', 'A 6-digit code has been sent to your email/phone.', 'success');
     setFocusOtpTick((n) => n + 1);
   }
 
   async function handleResend() {
     if (cooldown > 0) return;
     setIsLoading(true);
-    await authService.resendResetOtp(form.identifier);
+    const result = await authService.resendResetOtp(form.identifier);
     setIsLoading(false);
+    if (!result.ok) {
+      const { title, message } = mapApiError({ status: result.status, error: result.error, context: 'otp-send' });
+      showToast(title, message, 'error');
+      return;
+    }
     setOtp(EMPTY_OTP);
     startCooldown();
-    showToast('OTP Resent', 'A new code has been sent.', 'success');
+    if (result.devOtp) showToast('Dev OTP', `Your reset code is ${result.devOtp}`, 'info', { duration: 8000, icon: 'fa-key' });
+    else showToast('OTP Resent', 'A new code has been sent.', 'success');
     setFocusOtpTick((n) => n + 1);
   }
 
@@ -73,8 +86,13 @@ export default function ForgotPassword() {
       return;
     }
     setIsLoading(true);
-    await authService.resetPassword({ identifier: form.identifier, otp: otp.join(''), newPassword: form.newPassword });
+    const result = await authService.resetPassword({ identifier: form.identifier, otp: otp.join(''), newPassword: form.newPassword });
     setIsLoading(false);
+    if (!result.ok) {
+      const { title, message } = mapApiError({ status: result.status, error: result.error, context: 'otp' });
+      showToast(title, result.message || message, 'error');
+      return;
+    }
     setCurrentStep(3);
   }
 
