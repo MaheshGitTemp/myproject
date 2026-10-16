@@ -34,6 +34,14 @@ export async function sendMail({ to, subject, text, html }) {
     console.log(`Subject: ${subject}`);
     console.log('-------------------------------------------------------------');
     console.log(text);
+    // Surface any 6-digit code on its own banner line so it is unmistakable in
+    // the backend terminal during local dev (OTP flows).
+    const codeMatch = String(subject + ' ' + text).match(/\b(\d{4,8})\b/);
+    if (codeMatch) {
+      console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+      console.log(`>>>>  OTP CODE: ${codeMatch[1]}  (${to})`);
+      console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+    }
     console.log('=============================================================\n');
     return { driver: 'console' };
   }

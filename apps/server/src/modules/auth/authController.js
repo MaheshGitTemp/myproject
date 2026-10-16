@@ -13,6 +13,14 @@ import { computeFullName, FIXED_CASTE } from '../profiles/profilesRepo.js';
 
 // Coerce '' -> null so empty wizard fields don't persist as empty strings.
 const nn = (v) => (v === undefined || v === '' ? null : v);
+// In development only, surface the OTP so it can be tested without real SMTP.
+// NEVER returns the code in production (strictly gated on NODE_ENV).
+const isDev = (process.env.NODE_ENV || 'development') !== 'production';
+function devOtpFields(code, email) {
+  if (!isDev) return {};
+  console.log(`[dev-otp] OTP for ${email}: ${code}`);
+  return { devOtp: code };
+}
 // Coerce a value to an int (or null).
 const toInt = (v) => {
   const n = parseInt(v, 10);
@@ -141,6 +149,7 @@ export async function register(req, res, next) {
       matId: user.mat_id,
       next: 'verify_email',
       resendCooldownSeconds: config.otp.resendCooldownSeconds,
+      ...devOtpFields(code, normalizedEmail),
     });
   } catch (err) {
     next(err);
@@ -192,11 +201,13 @@ export async function resendOtp(req, res, next) {
     const normalizedEmail = email.trim().toLowerCase();
     const user = await queryOne('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
     // Always respond ok (don't leak whether the email exists), but only send if it does.
+    let devFields = {};
     if (user) {
       const code = await issueOtp({ userId: user.id, destination: normalizedEmail, purpose: 'register' });
       await sendOtpEmail(normalizedEmail, code, 'register');
+      devFields = devOtpFields(code, normalizedEmail);
     }
-    res.json({ ok: true, resendCooldownSeconds: config.otp.resendCooldownSeconds });
+    res.json({ ok: true, resendCooldownSeconds: config.otp.resendCooldownSeconds, ...devFields });
   } catch (err) {
     next(err);
   }
@@ -288,11 +299,13 @@ export async function forgotPassword(req, res, next) {
     if (!isValidEmail(email)) return res.status(400).json({ error: 'invalid_email' });
     const normalizedEmail = email.trim().toLowerCase();
     const user = await queryOne('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+    let devFields = {};
     if (user) {
       const code = await issueOtp({ userId: user.id, destination: normalizedEmail, purpose: 'reset' });
       await sendOtpEmail(normalizedEmail, code, 'reset');
+      devFields = devOtpFields(code, normalizedEmail);
     }
-    res.json({ ok: true }); // don't leak existence
+    res.json({ ok: true, ...devFields }); // don't leak existence
   } catch (err) {
     next(err);
   }
