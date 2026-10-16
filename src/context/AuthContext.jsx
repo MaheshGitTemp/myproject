@@ -1,7 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { config } from '../config/index.js';
 import { buildMember, getMe, getMyProfile, getStats } from '../services/accountService.js';
 import { CURRENT_MEMBER } from '../services/profileService.js';
+import { onSessionExpired, mapApiError } from '../services/apiError.js';
+import { useToast } from './ToastContext.jsx';
 
 // Mock session. Stored in localStorage ("remember me") or sessionStorage.
 // When the real API exists, keep this interface (user, signIn, signOut) and swap the storage for tokens.
@@ -19,6 +22,8 @@ function readSession() {
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [user, setUser] = useState(readSession);
   // The REAL logged-in member (merged identity + profile). null when logged out
   // or before the first hydrate completes; consumers pair it with FALLBACK_MEMBER.
@@ -101,6 +106,19 @@ export function AuthProvider({ children }) {
     setUser(null);
     setMember(null);
   }, []);
+
+  // Single global "session expired" handler: a 401 on an authed call clears auth
+  // state, shows ONE friendly toast, and redirects to login. The event bus in
+  // apiError.js debounces concurrent 401s so this fires only once per burst.
+  useEffect(() => {
+    const unsubscribe = onSessionExpired(() => {
+      signOut();
+      const { title, message } = mapApiError({ status: 401, context: 'authed' });
+      showToast(title, message, 'error');
+      navigate('/login', { replace: true });
+    });
+    return unsubscribe;
+  }, [signOut, showToast, navigate]);
 
   const value = useMemo(
     () => ({ user, member, signIn, signOut, refreshMember }),
