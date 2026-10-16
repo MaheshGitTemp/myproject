@@ -9,6 +9,7 @@
 // never throw to the caller — on a network error, !res.ok, or 401 they return
 // an empty result (or the mock when fallback is enabled).
 import { config } from '../config/index.js';
+import { notifySessionExpired } from './apiError.js';
 import { CONVERSATIONS } from '../pages/app/Chat/chatData.js';
 
 // --- Load the conversation list -------------------------------------------
@@ -20,6 +21,7 @@ export async function getConversations() {
       headers: { Accept: 'application/json' },
       credentials: 'include',
     });
+    if (res.status === 401) notifySessionExpired();
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const conversations = Array.isArray(data) ? data : (data.results || data.conversations || []);
@@ -38,6 +40,7 @@ export async function getMessages(convId) {
       headers: { Accept: 'application/json' },
       credentials: 'include',
     });
+    if (res.status === 401) notifySessionExpired();
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return { ok: true, messages: data.messages || [] };
@@ -60,6 +63,7 @@ export async function sendMessage(matId, body) {
       credentials: 'include',
       body: JSON.stringify({ matId, body }),
     });
+    if (res.status === 401) notifySessionExpired();
     if (res.status === 403) return { ok: false, status: 403, reason: 'messaging_blocked' };
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -79,6 +83,7 @@ export async function markRead(convId) {
       headers: { Accept: 'application/json' },
       credentials: 'include',
     });
+    if (res.status === 401) notifySessionExpired();
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return { ok: true, updated: data.updated };

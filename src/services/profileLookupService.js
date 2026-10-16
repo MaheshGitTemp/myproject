@@ -1,6 +1,7 @@
 // Single place for profile lookup, ID handling, and the demo-data fallback
 // (port of assets/js/core/profile-service.js). Pages never touch the API or mock data directly.
 import { config } from '../config/index.js';
+import { notifySessionExpired } from './apiError.js';
 import { MOCK_PROFILES } from '../data/mockProfiles.js';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -30,6 +31,7 @@ export async function getProfileById(rawId) {
   if (config.PROFILE_ENDPOINT) {
     try {
       const res = await fetch(`${config.PROFILE_ENDPOINT}?id=${encodeURIComponent(id)}`, { headers: { Accept: 'application/json' }, credentials: 'include' });
+      if (res.status === 401) notifySessionExpired();
       if (res.status === 404) return { status: 'not_found' };
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -82,6 +84,7 @@ export async function searchProfiles(form) {
       credentials: 'include',
       body: JSON.stringify(payload),
     });
+    if (res.status === 401) notifySessionExpired();
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const results = data.results || data.data || data.profiles || [];
@@ -92,6 +95,6 @@ export async function searchProfiles(form) {
       const results = searchMock(form);
       return { results, total: results.length, demo: true };
     }
-    return { results: [], total: 0, demo: false };
+    return { results: [], total: 0, demo: false, error: true };
   }
 }

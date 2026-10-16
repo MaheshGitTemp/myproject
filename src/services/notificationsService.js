@@ -10,6 +10,7 @@
 // feed via matchesService — THIS service backs the header NotificationsMenu
 // dropdown + unread badge only.
 import { config } from '../config/index.js';
+import { notifySessionExpired } from './apiError.js';
 import { NOTIFICATION_PREVIEW } from '../services/profileService.js';
 
 /** GET/POST JSON against a notifications endpoint with the session cookie.
@@ -25,6 +26,7 @@ async function request(path, { method = 'GET', body } = {}) {
     opts.body = JSON.stringify(body);
   }
   const res = await fetch(`${config.API_BASE}${path}`, opts);
+  if (res.status === 401) notifySessionExpired();
   let data = {};
   try {
     data = await res.json();

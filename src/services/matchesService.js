@@ -6,6 +6,7 @@
 //
 // Follows the authService.js / profileLookupService.js pattern.
 import { config } from '../config/index.js';
+import { notifySessionExpired } from './apiError.js';
 import { MUTUALS, SHORTLISTED } from '../pages/app/Matches/matchesData.js';
 
 // The mock rows only have a numeric uid; the live cards carry both uid (React
@@ -26,6 +27,7 @@ async function request(path, { method = 'GET', body } = {}) {
     opts.body = JSON.stringify(body);
   }
   const res = await fetch(`${config.API_BASE}${path}`, opts);
+  if (res.status === 401) notifySessionExpired();
   let data = {};
   try {
     data = await res.json();

@@ -57,8 +57,8 @@ async function fetchMe() {
 // --- Login ---------------------------------------------------------------
 export async function login({ identifier, password }) {
   try {
-    const { httpOk, data } = await postAuth('login', { identifier, password });
-    if (!httpOk) return { ok: false, error: data.error, message: data.message };
+    const { httpOk, status, data } = await postAuth('login', { identifier, password });
+    if (!httpOk) return { ok: false, status, error: data.error, message: data.message };
     // login returns the user, but names live on the profile — pull the fully
     // joined user from /me so the app has firstName/lastName.
     const user = (await fetchMe()) || data.user;
@@ -77,9 +77,9 @@ export async function login({ identifier, password }) {
 export async function sendOtp(form) {
   lastRegisterEmail = form && form.email ? form.email : lastRegisterEmail;
   try {
-    const { httpOk, data } = await postAuth('register', form || {});
-    if (!httpOk) return { ok: false, error: data.error, message: data.message };
-    return { ok: true, matId: data.matId, resendCooldownSeconds: data.resendCooldownSeconds };
+    const { httpOk, status, data } = await postAuth('register', form || {});
+    if (!httpOk) return { ok: false, status, error: data.error, message: data.message };
+    return { ok: true, matId: data.matId, devOtp: data.devOtp, resendCooldownSeconds: data.resendCooldownSeconds };
   } catch (e) {
     console.error('sendOtp failed', e);
     if (config.USE_MOCK_FALLBACK) {
@@ -93,8 +93,8 @@ export async function sendOtp(form) {
 // --- Registration: verify the emailed OTP (6-char code string) -------------
 export async function verifyOtp(code) {
   try {
-    const { httpOk, data } = await postAuth('verify-otp', { email: lastRegisterEmail, code });
-    if (!httpOk) return { ok: false, error: data.error, message: data.message };
+    const { httpOk, status, data } = await postAuth('verify-otp', { email: lastRegisterEmail, code });
+    if (!httpOk) return { ok: false, status, error: data.error, message: data.message };
     return { ok: true };
   } catch (e) {
     console.error('verifyOtp failed', e);
@@ -110,9 +110,9 @@ export async function verifyOtp(code) {
 export async function resendOtp(form) {
   const email = (form && form.email) || lastRegisterEmail;
   try {
-    const { httpOk, data } = await postAuth('resend-otp', { email });
-    if (!httpOk) return { ok: false, error: data.error, message: data.message };
-    return { ok: true, resendCooldownSeconds: data.resendCooldownSeconds };
+    const { httpOk, status, data } = await postAuth('resend-otp', { email });
+    if (!httpOk) return { ok: false, status, error: data.error, message: data.message };
+    return { ok: true, devOtp: data.devOtp, resendCooldownSeconds: data.resendCooldownSeconds };
   } catch (e) {
     console.error('resendOtp failed', e);
     if (config.USE_MOCK_FALLBACK) {
@@ -196,9 +196,9 @@ export async function registerProfile(form) {
 // --- Forgot password: send reset OTP (identifier = email or phone) ---------
 export async function sendResetOtp(identifier) {
   try {
-    const { httpOk, data } = await postAuth('forgot-password', { email: identifier });
-    if (!httpOk) return { ok: false, error: data.error, message: data.message };
-    return { ok: true, resendCooldownSeconds: data.resendCooldownSeconds };
+    const { httpOk, status, data } = await postAuth('forgot-password', { email: identifier });
+    if (!httpOk) return { ok: false, status, error: data.error, message: data.message };
+    return { ok: true, devOtp: data.devOtp, resendCooldownSeconds: data.resendCooldownSeconds };
   } catch (e) {
     console.error('sendResetOtp failed', e);
     if (config.USE_MOCK_FALLBACK) {
@@ -211,9 +211,9 @@ export async function sendResetOtp(identifier) {
 
 export async function resendResetOtp(identifier) {
   try {
-    const { httpOk, data } = await postAuth('forgot-password', { email: identifier });
-    if (!httpOk) return { ok: false, error: data.error, message: data.message };
-    return { ok: true, resendCooldownSeconds: data.resendCooldownSeconds };
+    const { httpOk, status, data } = await postAuth('forgot-password', { email: identifier });
+    if (!httpOk) return { ok: false, status, error: data.error, message: data.message };
+    return { ok: true, devOtp: data.devOtp, resendCooldownSeconds: data.resendCooldownSeconds };
   } catch (e) {
     console.error('resendResetOtp failed', e);
     if (config.USE_MOCK_FALLBACK) {
@@ -227,12 +227,12 @@ export async function resendResetOtp(identifier) {
 // --- Forgot password: reset with the OTP (identifier->email, otp->code) ----
 export async function resetPassword({ identifier, otp, newPassword }) {
   try {
-    const { httpOk, data } = await postAuth('reset-password', {
+    const { httpOk, status, data } = await postAuth('reset-password', {
       email: identifier,
       code: otp,
       newPassword,
     });
-    if (!httpOk) return { ok: false, error: data.error, message: data.message };
+    if (!httpOk) return { ok: false, status, error: data.error, message: data.message };
     return { ok: true };
   } catch (e) {
     console.error('resetPassword failed', e);

@@ -5,6 +5,7 @@
 //
 // Follows the authService.js / profileLookupService.js pattern.
 import { config } from '../config/index.js';
+import { notifySessionExpired } from './apiError.js';
 
 // Flatten { ok, price, free, alreadyUnlocked, contact:{phone,email,whatsapp,
 // contactUnlocked,contactLockedReason} } into the fields the UI renders.
@@ -51,6 +52,7 @@ const MOCK_CONTACT = {
 export async function unlockContact(matId) {
   try {
     const { res, data } = await request(`/contact/unlock/${encodeURIComponent(matId)}`, { method: 'POST' });
+    if (res.status === 401) { notifySessionExpired(); return { ok: false, status: 401 }; }
     if (res.status === 403) return { ok: false, status: 403, reason: 'blocked' };
     if (res.status === 429) return { ok: false, status: 429, reason: 'daily_limit_reached', limit: data.limit };
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -66,6 +68,7 @@ export async function unlockContact(matId) {
 export async function getContact(matId) {
   try {
     const { res, data } = await request(`/contact/${encodeURIComponent(matId)}`);
+    if (res.status === 401) { notifySessionExpired(); return { ok: false, status: 401 }; }
     if (res.status === 403) return { ok: false, status: 403, reason: 'blocked' };
     if (res.status === 429) return { ok: false, status: 429, reason: 'daily_limit_reached', limit: data.limit };
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

@@ -8,6 +8,7 @@
 // credentials:'include', res.json() in try/catch, mock-fallback branch that
 // never throws).
 import { config } from '../config/index.js';
+import { notifySessionExpired } from './apiError.js';
 
 // Neutral avatar used whenever the member has no profile photo. A remote URL so
 // no asset import is required and it works in every build.
@@ -47,6 +48,7 @@ async function request(path, { method = 'GET', body } = {}) {
     opts.body = JSON.stringify(body);
   }
   const res = await fetch(`${config.API_BASE}${path}`, opts);
+  if (res.status === 401) notifySessionExpired();
   let data = {};
   try {
     data = await res.json();
